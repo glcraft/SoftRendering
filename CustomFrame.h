@@ -10,6 +10,7 @@ public:
 
     void clear(glm::vec3 color);
     void clear(glm::tvec3<uint8_t> color);
+    void draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::tvec3<uint8_t> color);
     void apply();
 private:
     GLuint PBO;

@@ -12,7 +12,8 @@ void MainGame::init()
     glewInit();
 
     m_cframe = std::unique_ptr<CustomFrame>(new CustomFrame);
-    m_cframe->clear(glm::tvec3<uint8_t>(0,0,255));
+    m_cframe->clear(glm::tvec3<uint8_t>(0,0,0));
+    m_cframe->draw_line({0,0}, {Constants::TextureWidth, Constants::TextureHeight}, {0,255,0});
     m_cframe->apply();
 }
 void MainGame::display()

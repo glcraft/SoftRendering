@@ -70,3 +70,27 @@ void CustomFrame::apply()
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
+void CustomFrame::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::tvec3<uint8_t> color)
+{
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO);
+    glm::tvec3<uint8_t>* pixs = static_cast<glm::tvec3<uint8_t>*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
+
+    // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+    glm::vec2 delta = pos2-pos1;
+    float deltaErr = abs(delta.y/delta.x);
+    float error=0;
+    int y=0;
+    for (int x=pos1.x; x<pos2.x;++x)
+    {
+        pixs[x+y*Constants::TextureWidth] = color;
+        error+=deltaErr;
+        if (error>= 0.5f)
+        {
+            y+=glm::sign(delta.y);
+            error-=1.f;
+        }
+    }
+
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+}
