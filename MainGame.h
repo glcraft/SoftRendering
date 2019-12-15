@@ -1,4 +1,4 @@
-#include <gl/glew.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <memory>
 #include "CustomFrame.h"
@@ -14,4 +14,5 @@ private:
     void render();
     GLFWwindow* m_window;
     std::unique_ptr<CustomFrame> m_cframe;
+    CommandBuffer m_cmdBuffer;
 };

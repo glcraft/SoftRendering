@@ -41,7 +41,7 @@ CustomFrame::~CustomFrame()
     glDeleteFramebuffers(1, &FBO);
 }
 
-void CustomFrame::blit(GLuint fboDestination, glm::vec2 pos1, glm::vec2 pos2)
+void CustomFrame::blit(GLuint fboDestination, glm::ivec2 pos1, glm::ivec2 pos2)
 {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, FBO);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboDestination);
@@ -49,18 +49,10 @@ void CustomFrame::blit(GLuint fboDestination, glm::vec2 pos1, glm::vec2 pos2)
     glBlitFramebuffer(0, 0, Constants::TextureWidth, Constants::TextureHeight, pos1.x, pos1.y, pos2.x, pos2.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
-void CustomFrame::clear(glm::tvec3<uint8_t> color)
+void CustomFrame::clear_image(glm::tvec3<uint8_t>* pixs, const Command& cmd)
 {
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO);
-    glm::tvec3<uint8_t>* pixs = static_cast<glm::tvec3<uint8_t>*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
     for(int ix=0;ix<Constants::TextureWidth*Constants::TextureHeight;ix++)
-        pixs[ix]=color;
-    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-}
-void CustomFrame::clear(glm::vec3 color)
-{
-    clear(glm::tvec3<uint8_t>(color*255.f));
+        pixs[ix]=cmd.color;
 }
 void CustomFrame::apply()
 {
@@ -70,19 +62,16 @@ void CustomFrame::apply()
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
-void CustomFrame::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::tvec3<uint8_t> color)
+void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd)
 {
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO);
-    glm::tvec3<uint8_t>* pixs = static_cast<glm::tvec3<uint8_t>*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
-
     // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-    glm::vec2 delta = pos2-pos1;
+    glm::vec2 delta = cmd.pos2-cmd.pos1;
     float deltaErr = abs(delta.y/delta.x);
     float error=0;
     int y=0;
-    for (int x=pos1.x; x<pos2.x;++x)
+    for (int x=cmd.pos1.x; x<cmd.pos2.x;++x)
     {
-        pixs[x+y*Constants::TextureWidth] = color;
+        pixs[x+y*Constants::TextureWidth] = cmd.color;
         error+=deltaErr;
         if (error>= 0.5f)
         {
@@ -90,7 +79,47 @@ void CustomFrame::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::tvec3<uint8_t
             error-=1.f;
         }
     }
+}
+
+void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
+{
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO);
+    glm::tvec3<uint8_t>* pixs = static_cast<glm::tvec3<uint8_t>*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
+    const auto& cmdData = cmdBuffer.get_buffer();
+    for (auto& cmd : cmdData)
+    {
+        switch(cmd.type)
+        {
+            case Command::Type::Clear:
+                clear_image(pixs, cmd);
+                break;
+            case Command::Type::DrawLine:
+                draw_line(pixs, cmd);
+                break;
+            default:
+                break;
+        }
+    }
 
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    apply();
+}
+
+
+void CommandBuffer::reserve(size_t size)
+{
+    m_cmdBuffer.reserve(size);
+}
+void CommandBuffer::clear_image(glm::vec3 color)
+{
+    Command cmd;
+    cmd.type = Command::Type::Clear;
+    cmd.color=color*255.f;
+    m_cmdBuffer.push_back(cmd);
+}
+void CommandBuffer::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color)
+{
+    Command cmd{Command::Type::DrawLine, pos1, pos2, color*255.f};
+    m_cmdBuffer.push_back(cmd);
 }

@@ -12,9 +12,8 @@ void MainGame::init()
     glewInit();
 
     m_cframe = std::unique_ptr<CustomFrame>(new CustomFrame);
-    m_cframe->clear(glm::tvec3<uint8_t>(0,0,0));
-    m_cframe->draw_line({0,0}, {Constants::TextureWidth, Constants::TextureHeight}, {0,255,0});
-    m_cframe->apply();
+    m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
+    m_cmdBuffer.draw_line({0,0}, {Constants::TextureWidth, Constants::TextureHeight}, {0,1,0});
 }
 void MainGame::display()
 {
@@ -36,6 +35,6 @@ void MainGame::render()
 {
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
-
+    m_cframe->draw_command_buffer(m_cmdBuffer);
     m_cframe->blit(0, {0, 0}, {Constants::WindowWidth, Constants::WindowHeight});
 }
