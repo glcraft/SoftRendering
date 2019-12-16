@@ -2,32 +2,32 @@
 #include "constants.h"
 #include <algorithm>
 #include <numeric>
-std::vector<std::pair<int, int>> genBresenhamLine(glm::ivec2* pos_orig)
+std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
 {
     // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-    glm::ivec2 pos[2] = {pos_orig[0], pos_orig[1]};
+    // glm::ivec2 pos[2] = {pos_orig[0], pos_orig[1]};
     bool reverse=false;
-    if (pos[0].x>pos[1].x)
+    if (pos.first.x>pos.second.x)
     {
-        std::swap(pos[0], pos[1]);
+        std::swap(pos.first, pos.second);
         reverse=true;
     }
-    glm::vec2 delta = pos[1]-pos[0];
+    glm::vec2 delta = pos.second-pos.first;
     if (delta.y==0)
-        return {{pos[0].x, pos[1].x}};
+        return {{pos.first.x, pos.second.x}};
     
-    std::vector<std::pair<int, int>> result(glm::abs(pos[1].y-pos[0].y)+1);
+    std::vector<std::pair<int, int>> result(glm::abs(pos.second.y-pos.first.y)+1);
     if (delta.x==0)
     {
         int i=0;
-        for (int y=pos[0].y, i=0;y<pos[1].y;++y)
-            result[i]={pos[0].x, pos[0].x};
+        for (int y=pos.first.y, i=0;y<pos.second.y;++y)
+            result[i]={pos.first.x, pos.first.x};
         return result;
     }
     float deltaErr = glm::abs(delta.y/delta.x);
     float error=0;
-    result[0].first=pos[0].x;
-    for (int x=pos[0].x, i=0; x<pos[1].x;++x)
+    result[0].first=pos.first.x;
+    for (int x=pos.first.x, i=0; x<pos.second.x;++x)
     {
         error+=deltaErr;
         if (error>= 0.5f)
@@ -38,7 +38,7 @@ std::vector<std::pair<int, int>> genBresenhamLine(glm::ivec2* pos_orig)
                 result[++i].first=x+(error< 0.5f);
             }
     }
-    result.back().second=pos[1].x;
+    result.back().second=pos.second.x;
     if (reverse)
         return std::vector<std::pair<int, int>>(result.rbegin(), result.rend());
     return result;
@@ -51,10 +51,10 @@ void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, g
 }
 void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd)
 {
-    glm::ivec2 pos[2]={cmd.pos[0], cmd.pos[1]};
+    std::pair<glm::ivec2, glm::ivec2> pos={cmd.pos[0], cmd.pos[1]};
     auto bresLine = genBresenhamLine(pos);
-    int signDeltaY=glm::sign(pos[1].y-pos[0].y);
-    int y=pos[0].y;
+    int signDeltaY=glm::sign(pos.second.y-pos.first.y);
+    int y=pos.first.y;
     for(const auto& range : bresLine)
     {
         draw_horizontal(pixs, y, range, cmd.color);
