@@ -75,6 +75,9 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
             case Command::Type::DrawLine:
                 draw_line(pixs, cmd);
                 break;
+            case Command::Type::DrawTriangle:
+                draw_triangle(pixs, cmd);
+                break;
             default:
                 break;
         }
@@ -99,6 +102,20 @@ void CommandBuffer::clear_image(glm::vec3 color)
 }
 void CommandBuffer::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color)
 {
-    Command cmd{Command::Type::DrawLine, pos1, pos2, color*255.f};
+    Command cmd;
+    cmd.type = Command::Type::DrawLine;
+    cmd.pos[0]=pos1;
+    cmd.pos[1]=pos2;
+    cmd.color=color*255.f;
+    m_cmdBuffer.push_back(cmd);
+}
+void CommandBuffer::draw_triangle(glm::ivec2 pos1, glm::ivec2 pos2, glm::ivec2 pos3, glm::vec3 color)
+{
+    Command cmd;
+    cmd.type = Command::Type::DrawTriangle;
+    cmd.pos[0]=pos1;
+    cmd.pos[1]=pos2;
+    cmd.pos[2]=pos3;
+    cmd.color=color*255.f;
     m_cmdBuffer.push_back(cmd);
 }

@@ -65,14 +65,21 @@ void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd)
 void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-    const auto flatTop = [pixs](glm::ivec2 pos[3]){
+    const auto flatTop = [&pixs, &cmd](glm::ivec2 pos[3]){
         glm::ivec2 posx[2]={pos[1], pos[2]};
         if (pos[1].x<=pos[2].x)
             posx[0]=pos[1], posx[1]=pos[2];
         else
             posx[0]=pos[2], posx[1]=pos[1];
-        
-        glm::vec2 delta[2] = {posx[0]-pos[0], posx[1]-pos[0]};
+        std::vector<std::pair<int, int>> ligne[2]={genBresenhamLine({pos[0], posx[0]}), genBresenhamLine({pos[0], posx[1]})};
+        int signDeltaY=glm::sign(pos[1].y-pos[0].y);
+        int y=pos[0].y;
+        size_t maxy=glm::min(ligne[0].size(), ligne[1].size());
+        for(size_t i=0;i<maxy;i++)
+        {
+            draw_horizontal(pixs, y, {ligne[0][i].first, ligne[1][i].second}, cmd.color);
+            y+=signDeltaY;
+        }
     };
     const auto flatBottom = [pixs](glm::ivec2 pos[3]){
 

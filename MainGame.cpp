@@ -13,7 +13,11 @@ void MainGame::init()
 
     m_cframe = std::unique_ptr<CustomFrame>(new CustomFrame);
     m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
-    m_cmdBuffer.draw_line({0,0}, {Constants::TextureWidth, Constants::TextureHeight}, {0,1,0});
+    m_cmdBuffer.draw_triangle({Constants::TextureWidth-1,0}, {Constants::TextureWidth/2, Constants::TextureHeight-1}, {0, Constants::TextureHeight-1}, {0,1,0});
+    // m_cmdBuffer.draw_line({Constants::TextureWidth*40/100,0}, {Constants::TextureWidth/2,Constants::TextureHeight-1}, {0,1,0});
+    // m_cmdBuffer.draw_line({Constants::TextureWidth*60/100,0}, {Constants::TextureWidth/2,Constants::TextureHeight-1}, {0,1,0});
+    // m_cmdBuffer.draw_line({Constants::TextureWidth*40/100,Constants::TextureHeight-1}, {Constants::TextureWidth/2,0}, {1,0,0});
+    // m_cmdBuffer.draw_line({Constants::TextureWidth*60/100,Constants::TextureHeight-1}, {Constants::TextureWidth/2,0}, {1,0,0});
 }
 void MainGame::display()
 {

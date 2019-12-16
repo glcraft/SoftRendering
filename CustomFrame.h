@@ -5,7 +5,8 @@ struct Command
 {
     enum class Type{
         Clear,
-        DrawLine
+        DrawLine,
+        DrawTriangle,
     } type;
     glm::ivec2 pos[3];
     glm::tvec3<uint8_t> color;
@@ -16,6 +17,7 @@ public:
     void reserve(size_t size);
     void clear_image(glm::vec3 color);
     void draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color);
+    void draw_triangle(glm::ivec2 pos1, glm::ivec2 pos2, glm::ivec2 pos3, glm::vec3 color);
 
     void clear_buffer();
     const std::vector<Command>& get_buffer() const
@@ -36,6 +38,7 @@ public:
 private:
     void clear_image(glm::tvec3<uint8_t>* pixs, const Command& cmd);
     void draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd);
+    void draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd);
     GLuint PBO;
     GLuint FBO;
     GLuint texture;
