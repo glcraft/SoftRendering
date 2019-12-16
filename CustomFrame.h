@@ -7,7 +7,7 @@ struct Command
         Clear,
         DrawLine
     } type;
-    glm::ivec2 pos1, pos2;
+    glm::ivec2 pos[3];
     glm::tvec3<uint8_t> color;
 };
 class CommandBuffer
