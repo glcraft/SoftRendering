@@ -20,16 +20,16 @@ CustomFrame::CustomFrame()
     
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO);
     glBufferData(GL_PIXEL_UNPACK_BUFFER, Constants::TextureWidth*Constants::TextureHeight*3, nullptr, GL_STREAM_DRAW);
+#ifndef NDEBUG
     {
-        // std::vector<uint8_t> imgsrc(Constants::TextureWidth*Constants::TextureHeight*3);
         uint8_t* pixs = static_cast<uint8_t*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
         constexpr int totalSize=Constants::TextureWidth*Constants::TextureHeight*3;
         for(int i=0;i<totalSize;i++)
             pixs[i] = rand()%256;
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     }
-
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, Constants::TextureWidth, Constants::TextureHeight, GL_RGB, GL_UNSIGNED_BYTE, 0);
+#endif
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
