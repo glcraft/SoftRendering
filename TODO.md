@@ -6,4 +6,4 @@
   - [x] Triangle quelconque
 - [ ] Clip space
   - [ ] rangée [-1, 1]
-  - [ ] dessin hors écran écarté
+  - [x] dessin hors écran écarté

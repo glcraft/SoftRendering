@@ -161,6 +161,7 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& 
 }
 void CustomFrame::clear_image(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
 {
-    for(int ix=0;ix<Constants::TextureWidth*Constants::TextureHeight;ix++)
+    size_t s=m_size.x*m_size.y;
+    for(int ix=0;ix<s;++ix)
         pixs[ix]=cmd.color;
 }
