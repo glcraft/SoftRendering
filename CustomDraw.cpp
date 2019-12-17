@@ -49,6 +49,8 @@ std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ive
 void CustomFrame::draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, glm::tvec3<uint8_t> color)
 {
     int yW=y*m_size.x;
+    if (xs.second<0)
+        return;
     for (int x=glm::max(xs.first, 0); x<=xs.second && x<m_size.x;++x)
         pixs[x+yW]=color;
 }
@@ -58,9 +60,34 @@ void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
     auto bresLine = genBresenhamLine(pos);
     int signDeltaY=glm::sign(pos.second.y-pos.first.y);
     int y=pos.first.y;
-    for(const auto& range : bresLine)
+    int i=0;
+    for(int i=0;i<bresLine.size();++i)
     {
-        draw_horizontal(pixs, y, range, cmd.color);
+        if (y<0)
+        {
+            if (signDeltaY<0)
+                break;
+            else
+            {
+                int ecart = -y;
+                y=0;
+                i+=ecart;
+                continue;
+            }
+        }
+        else if (y>=m_size.y)
+        {
+            if (signDeltaY>0)
+                break;
+            else
+            {
+                int ecart = glm::abs(y-m_size.y-1);
+                y=m_size.y-1;
+                i+=ecart;
+                continue;
+            }
+        }
+        draw_horizontal(pixs, y, bresLine[i], cmd.color);
         y+=signDeltaY;
     }
 
@@ -81,6 +108,31 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& 
         size_t i=offset;
         for(;i<maxy;i++)
         {
+            if (y<0)
+            {
+                if (signDeltaY<0)
+                    break;
+                else
+                {
+                    int ecart = -y;
+                    y=0;
+                    i+=ecart;
+                    continue;
+                }
+            }
+            else if (y>=m_size.y)
+            {
+                if (signDeltaY>0)
+                    break;
+                else
+                {
+                    int ecart = glm::abs(y-m_size.y-1);
+                    y=m_size.y-1;
+                    i+=ecart;
+                    continue;
+                }
+            }
+            
             draw_horizontal(pixs, y, {ligne[0][i].first, ligne[1][i].second}, cmd.color);
             y+=signDeltaY;
         }
