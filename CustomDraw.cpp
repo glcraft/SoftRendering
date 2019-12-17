@@ -5,7 +5,6 @@
 std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
 {
     // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-    // glm::ivec2 pos[2] = {pos_orig[0], pos_orig[1]};
     bool reverse=false;
     if (pos.first.x>pos.second.x)
     {
@@ -19,8 +18,12 @@ std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ive
     std::vector<std::pair<int, int>> result(glm::abs(pos.second.y-pos.first.y)+1);
     if (delta.x==0)
     {
+        if (pos.first.y>pos.second.y)
+        {
+            std::swap(pos.first, pos.second);
+        }
         int i=0;
-        for (int y=pos.first.y, i=0;y<pos.second.y;++y)
+        for (int y=pos.first.y, i=0;y<pos.second.y;++y, ++i)
             result[i]={pos.first.x, pos.first.x};
         return result;
     }
@@ -65,7 +68,7 @@ void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd)
 void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-    const auto flatTop = [&pixs, &cmd](glm::ivec2 pos[3]){
+    const auto flatTop = [&pixs, &cmd](glm::ivec2 pos[3], size_t offset=0){
         glm::ivec2 posx[2]={pos[1], pos[2]};
         if (pos[1].x<=pos[2].x)
             posx[0]=pos[1], posx[1]=pos[2];
@@ -75,11 +78,13 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd)
         int signDeltaY=glm::sign(pos[1].y-pos[0].y);
         int y=pos[0].y;
         size_t maxy=glm::min(ligne[0].size(), ligne[1].size());
-        for(size_t i=0;i<maxy;i++)
+        size_t i=offset;
+        for(;i<maxy;i++)
         {
             draw_horizontal(pixs, y, {ligne[0][i].first, ligne[1][i].second}, cmd.color);
             y+=signDeltaY;
         }
+        return i;
     };
     const auto flatBottom = [&pixs, &cmd](glm::ivec2 pos[3]){
         int test=0;
@@ -93,10 +98,13 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd)
         std::swap(pos[0], pos[2]);
         flatTop(pos);
     }
-    // else
-    // {
-    //     /* code */
-    // }
+    else
+    {
+        size_t offset = flatTop(pos);
+        int test=0;
+        std::swap(pos[0], pos[2]);
+        flatTop(pos);
+    }
     
 }
 void CustomFrame::clear_image(glm::tvec3<uint8_t>* pixs, const Command& cmd)
