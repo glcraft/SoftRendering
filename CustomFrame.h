@@ -1,29 +1,36 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
+#include <memory>
+#include <experimental/memory>
 struct Command
 {
     enum class Type{
         Clear,
         DrawLine,
         DrawTriangle,
-    } type;
-    glm::ivec2 pos[3];
-    glm::tvec3<uint8_t> color;
+    };
+    const Type type;
+    struct Data
+    {
+        glm::ivec2 pos[3];
+        glm::tvec3<uint8_t> color;
+    } data;
 };
 class CommandBuffer
 {
 public:
+    using observer_command=std::experimental::observer_ptr<Command>;
     void reserve(size_t size);
-    void clear_image(glm::vec3 color);
-    void draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color);
-    void draw_triangle(glm::ivec2 pos1, glm::ivec2 pos2, glm::ivec2 pos3, glm::vec3 color);
+    observer_command clear_image(glm::vec3 color);
+    observer_command draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color);
+    observer_command draw_triangle(glm::ivec2 pos1, glm::ivec2 pos2, glm::ivec2 pos3, glm::vec3 color);
 
     void clear_buffer();
-    const std::vector<Command>& get_buffer() const
+    const std::vector<std::unique_ptr<Command>>& get_buffer() const
     {return m_cmdBuffer;}
 private:
-    std::vector<Command> m_cmdBuffer;
+    std::vector<std::unique_ptr<Command>> m_cmdBuffer;
 };
 
 class CustomFrame
@@ -36,9 +43,9 @@ public:
     void draw_command_buffer(const CommandBuffer& cmdBuffer);
     void apply();
 private:
-    void clear_image(glm::tvec3<uint8_t>* pixs, const Command& cmd);
-    void draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd);
-    void draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd);
+    void clear_image(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
+    void draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
+    void draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
     GLuint PBO;
     GLuint FBO;
     GLuint texture;

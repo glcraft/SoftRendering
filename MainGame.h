@@ -15,4 +15,5 @@ private:
     GLFWwindow* m_window;
     std::unique_ptr<CustomFrame> m_cframe;
     CommandBuffer m_cmdBuffer;
+    CommandBuffer::observer_command cmdTest;
 };

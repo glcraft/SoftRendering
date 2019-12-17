@@ -67,16 +67,16 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
     const auto& cmdData = cmdBuffer.get_buffer();
     for (auto& cmd : cmdData)
     {
-        switch(cmd.type)
+        switch(cmd->type)
         {
             case Command::Type::Clear:
-                clear_image(pixs, cmd);
+                clear_image(pixs, cmd->data);
                 break;
             case Command::Type::DrawLine:
-                draw_line(pixs, cmd);
+                draw_line(pixs, cmd->data);
                 break;
             case Command::Type::DrawTriangle:
-                draw_triangle(pixs, cmd);
+                draw_triangle(pixs, cmd->data);
                 break;
             default:
                 break;
@@ -93,29 +93,29 @@ void CommandBuffer::reserve(size_t size)
 {
     m_cmdBuffer.reserve(size);
 }
-void CommandBuffer::clear_image(glm::vec3 color)
+CommandBuffer::observer_command CommandBuffer::clear_image(glm::vec3 color)
 {
-    Command cmd;
-    cmd.type = Command::Type::Clear;
-    cmd.color=color*255.f;
-    m_cmdBuffer.push_back(cmd);
+    std::unique_ptr<Command> cmd(new Command{Command::Type::Clear});
+    cmd->data.color=color*255.f;
+    m_cmdBuffer.push_back(std::move(cmd));
+    return CommandBuffer::observer_command(m_cmdBuffer.back().get());
 }
-void CommandBuffer::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color)
+CommandBuffer::observer_command CommandBuffer::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color)
 {
-    Command cmd;
-    cmd.type = Command::Type::DrawLine;
-    cmd.pos[0]=pos1;
-    cmd.pos[1]=pos2;
-    cmd.color=color*255.f;
-    m_cmdBuffer.push_back(cmd);
+    std::unique_ptr<Command> cmd(new Command{Command::Type::DrawLine});
+    cmd->data.pos[0]=pos1;
+    cmd->data.pos[1]=pos2;
+    cmd->data.color=color*255.f;
+    m_cmdBuffer.push_back(std::move(cmd));
+    return CommandBuffer::observer_command(m_cmdBuffer.back().get());
 }
-void CommandBuffer::draw_triangle(glm::ivec2 pos1, glm::ivec2 pos2, glm::ivec2 pos3, glm::vec3 color)
+CommandBuffer::observer_command CommandBuffer::draw_triangle(glm::ivec2 pos1, glm::ivec2 pos2, glm::ivec2 pos3, glm::vec3 color)
 {
-    Command cmd;
-    cmd.type = Command::Type::DrawTriangle;
-    cmd.pos[0]=pos1;
-    cmd.pos[1]=pos2;
-    cmd.pos[2]=pos3;
-    cmd.color=color*255.f;
-    m_cmdBuffer.push_back(cmd);
+    std::unique_ptr<Command> cmd(new Command{Command::Type::DrawTriangle});
+    cmd->data.pos[0]=pos1;
+    cmd->data.pos[1]=pos2;
+    cmd->data.pos[2]=pos3;
+    cmd->data.color=color*255.f;
+    m_cmdBuffer.push_back(std::move(cmd));
+    return CommandBuffer::observer_command(m_cmdBuffer.back().get());
 }

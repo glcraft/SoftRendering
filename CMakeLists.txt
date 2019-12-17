@@ -16,3 +16,8 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 
 target_link_libraries(CompNoel PRIVATE glfw glm GLEW::GLEW)
+
+set_target_properties(CompNoel PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED true
+)

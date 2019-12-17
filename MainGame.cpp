@@ -2,6 +2,9 @@
 #include <iostream>
 #include <vector>
 #include "constants.h"
+#include <optional>
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 void MainGame::init()
 {
     glfwInit();
@@ -16,12 +19,7 @@ void MainGame::init()
     m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
     m_cmdBuffer.draw_triangle({Constants::TextureWidth-1,0}, {Constants::TextureWidth/2, Constants::TextureHeight-1}, {0, Constants::TextureHeight-1}, {0,1,0});
     m_cmdBuffer.draw_triangle({0,0}, {TW/2, 0}, {TW, TH}, {1,0,0});
-    m_cmdBuffer.draw_triangle({0,TH*40/100}, {TW*80/100, 0}, {TW*60/100, TH}, {0,0,1});
-
-    // m_cmdBuffer.draw_line({Constants::TextureWidth*40/100,0}, {Constants::TextureWidth/2,Constants::TextureHeight-1}, {0,1,0});
-    // m_cmdBuffer.draw_line({Constants::TextureWidth*60/100,0}, {Constants::TextureWidth/2,Constants::TextureHeight-1}, {0,1,0});
-    // m_cmdBuffer.draw_line({Constants::TextureWidth*40/100,Constants::TextureHeight-1}, {Constants::TextureWidth/2,0}, {1,0,0});
-    // m_cmdBuffer.draw_line({Constants::TextureWidth*60/100,Constants::TextureHeight-1}, {Constants::TextureWidth/2,0}, {1,0,0});
+    cmdTest = m_cmdBuffer.draw_triangle({0,TH*40/100}, {TW*80/100, 0}, {TW*60/100, TH}, {0,0,1});
 }
 void MainGame::display()
 {
@@ -41,6 +39,14 @@ void MainGame::clear()
 
 void MainGame::render()
 {
+    for (int i=0;i<3;i++)
+    {
+        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + glfwGetTime();
+        glm::vec2 pos(glm::cos(angle)*20+40, glm::sin(angle)*10+30);
+        cmdTest->data.pos[i]=glm::ivec2(pos);
+    }
+        
+
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
     m_cframe->draw_command_buffer(m_cmdBuffer);

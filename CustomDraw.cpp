@@ -52,7 +52,7 @@ void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, g
     for (int x=xs.first; x<=xs.second;++x)
         pixs[x+yW]=color;
 }
-void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd)
+void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
 {
     std::pair<glm::ivec2, glm::ivec2> pos={cmd.pos[0], cmd.pos[1]};
     auto bresLine = genBresenhamLine(pos);
@@ -65,7 +65,7 @@ void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command& cmd)
     }
 
 }
-void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd)
+void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
     const auto flatTop = [&pixs, &cmd](glm::ivec2 pos[3], size_t offset=0){
@@ -107,7 +107,7 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd)
     }
     
 }
-void CustomFrame::clear_image(glm::tvec3<uint8_t>* pixs, const Command& cmd)
+void CustomFrame::clear_image(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
 {
     for(int ix=0;ix<Constants::TextureWidth*Constants::TextureHeight;ix++)
         pixs[ix]=cmd.color;
