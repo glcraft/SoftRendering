@@ -81,19 +81,22 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command& cmd)
             y+=signDeltaY;
         }
     };
-    const auto flatBottom = [pixs](glm::ivec2 pos[3]){
-
+    const auto flatBottom = [&pixs, &cmd](glm::ivec2 pos[3]){
+        int test=0;
     };
     glm::ivec2 pos[3]={cmd.pos[0], cmd.pos[1], cmd.pos[2]};
     std::sort(std::begin(pos), std::end(pos), [](const glm::ivec2& p1, const glm::ivec2& p2) { return p1.y<p2.y; });
     if (pos[1].y==pos[2].y)
         flatTop(pos);
     else if (pos[1].y==pos[0].y)
-        flatBottom(pos);
-    else
     {
-        /* code */
+        std::swap(pos[0], pos[2]);
+        flatTop(pos);
     }
+    // else
+    // {
+    //     /* code */
+    // }
     
 }
 void CustomFrame::clear_image(glm::tvec3<uint8_t>* pixs, const Command& cmd)

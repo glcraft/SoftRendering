@@ -2,7 +2,7 @@
 
 - [x] Triangles
   - [x] Triangle haut
-  - [ ] Triangle bas
+  - [x] Triangle bas
   - [ ] Triangle quelconque
 - [ ] Clip space
   - [ ] rangée [-1, 1]

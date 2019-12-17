@@ -11,9 +11,11 @@ void MainGame::init()
     glewExperimental = true;
     glewInit();
 
+    constexpr int TW=Constants::TextureWidth-1, TH = Constants::TextureHeight-1;
     m_cframe = std::unique_ptr<CustomFrame>(new CustomFrame);
     m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
     m_cmdBuffer.draw_triangle({Constants::TextureWidth-1,0}, {Constants::TextureWidth/2, Constants::TextureHeight-1}, {0, Constants::TextureHeight-1}, {0,1,0});
+    m_cmdBuffer.draw_triangle({0,0}, {TW/2, 0}, {TW, TH}, {1,0,0});
     // m_cmdBuffer.draw_line({Constants::TextureWidth*40/100,0}, {Constants::TextureWidth/2,Constants::TextureHeight-1}, {0,1,0});
     // m_cmdBuffer.draw_line({Constants::TextureWidth*60/100,0}, {Constants::TextureWidth/2,Constants::TextureHeight-1}, {0,1,0});
     // m_cmdBuffer.draw_line({Constants::TextureWidth*40/100,Constants::TextureHeight-1}, {Constants::TextureWidth/2,0}, {1,0,0});
