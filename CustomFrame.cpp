@@ -84,7 +84,7 @@ CommandBuffer::observer_command CommandBuffer::clear_image(glm::vec3 color)
     m_cmdBuffer.push_back(std::move(cmd));
     return CommandBuffer::observer_command(m_cmdBuffer.back().get());
 }
-CommandBuffer::observer_command CommandBuffer::draw_line(glm::ivec2 pos1, glm::ivec2 pos2, glm::vec3 color)
+CommandBuffer::observer_command CommandBuffer::draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color)
 {
     std::unique_ptr<Command> cmd(new Command{Command::Type::DrawLine});
     cmd->data.pos[0]=pos1;
@@ -93,7 +93,7 @@ CommandBuffer::observer_command CommandBuffer::draw_line(glm::ivec2 pos1, glm::i
     m_cmdBuffer.push_back(std::move(cmd));
     return CommandBuffer::observer_command(m_cmdBuffer.back().get());
 }
-CommandBuffer::observer_command CommandBuffer::draw_triangle(glm::ivec2 pos1, glm::ivec2 pos2, glm::ivec2 pos3, glm::vec3 color)
+CommandBuffer::observer_command CommandBuffer::draw_triangle(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec3 color)
 {
     std::unique_ptr<Command> cmd(new Command{Command::Type::DrawTriangle});
     cmd->data.pos[0]=pos1;

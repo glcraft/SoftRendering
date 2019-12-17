@@ -56,7 +56,7 @@ void CustomFrame::draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<in
 }
 void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
 {
-    std::pair<glm::ivec2, glm::ivec2> pos={cmd.pos[0], cmd.pos[1]};
+    std::pair<glm::ivec2, glm::ivec2> pos={toScreenSpace(cmd.pos[0]), toScreenSpace(cmd.pos[1])};
     auto bresLine = genBresenhamLine(pos);
     int signDeltaY=glm::sign(pos.second.y-pos.first.y);
     int y=pos.first.y;
@@ -138,10 +138,7 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& 
         }
         return i;
     };
-    const auto flatBottom = [&pixs, &cmd](glm::ivec2 pos[3]){
-        int test=0;
-    };
-    glm::ivec2 pos[3]={cmd.pos[0], cmd.pos[1], cmd.pos[2]};
+    glm::ivec2 pos[3]={toScreenSpace(cmd.pos[0]), toScreenSpace(cmd.pos[1]), toScreenSpace(cmd.pos[2])};
     std::sort(std::begin(pos), std::end(pos), [](const glm::ivec2& p1, const glm::ivec2& p2) { return p1.y<p2.y; });
     if (pos[1].y==pos[2].y)
         flatTop(pos);
