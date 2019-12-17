@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <experimental/memory>
+#include "constants.h"
 struct Command
 {
     enum class Type{
@@ -36,8 +37,10 @@ private:
 class CustomFrame
 {
 public:
-    CustomFrame();
+    CustomFrame(glm::uvec2 = glm::uvec2(Constants::TextureWidth, Constants::TextureHeight));
     ~CustomFrame();
+    void setImageSize(glm::uvec2);
+    glm::uvec2 getImageSize();
 
     void blit(GLuint fboDestination, glm::ivec2 pos1, glm::ivec2 pos2);
     void draw_command_buffer(const CommandBuffer& cmdBuffer);
@@ -46,6 +49,10 @@ private:
     void clear_image(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
     void draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
     void draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
+
+    void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, glm::tvec3<uint8_t> color);
+
+    glm::uvec2 m_size;
     GLuint PBO;
     GLuint FBO;
     GLuint texture;

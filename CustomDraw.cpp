@@ -46,10 +46,10 @@ std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ive
         return std::vector<std::pair<int, int>>(result.rbegin(), result.rend());
     return result;
 }
-void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, glm::tvec3<uint8_t> color)
+void CustomFrame::draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, glm::tvec3<uint8_t> color)
 {
-    int yW=y*Constants::TextureWidth;
-    for (int x=xs.first; x<=xs.second;++x)
+    int yW=y*m_size.x;
+    for (int x=glm::max(xs.first, 0); x<=xs.second && x<m_size.x;++x)
         pixs[x+yW]=color;
 }
 void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
@@ -68,7 +68,7 @@ void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
 void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-    const auto flatTop = [&pixs, &cmd](glm::ivec2 pos[3], size_t offset=0){
+    const auto flatTop = [&pixs, &cmd, this](glm::ivec2 pos[3], size_t offset=0){
         glm::ivec2 posx[2]={pos[1], pos[2]};
         if (pos[1].x<=pos[2].x)
             posx[0]=pos[1], posx[1]=pos[2];
