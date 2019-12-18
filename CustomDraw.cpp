@@ -126,14 +126,16 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& 
                     break;
                 else
                 {
-                    int ecart = glm::abs(y-m_size.y-1);
+                    int resultCalc=y-m_size.y-1;
+                    int ecart = glm::abs(resultCalc);
                     y=m_size.y-1;
                     i+=ecart;
                     continue;
                 }
             }
-            
-            draw_horizontal(pixs, y, {ligne[0][i].first, ligne[1][i].second}, cmd.color);
+            int left=glm::min(ligne[0][i].first, ligne[1][i].second);
+            int right=glm::max(ligne[0][i].first, ligne[1][i].second);
+            draw_horizontal(pixs, y, {left, right}, cmd.color);
             y+=signDeltaY;
         }
         return i;
@@ -151,7 +153,7 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& 
     {
         size_t offset = flatTop(pos);
         int test=0;
-        std::swap(pos[0], pos[2]);
+        std::swap(pos[2], pos[0]);
         flatTop(pos);
     }
     
