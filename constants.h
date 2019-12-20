@@ -1,3 +1,4 @@
+#pragma once
 namespace Constants
 {
     constexpr int WindowWidth = 1920, WindowHeight = 1080;

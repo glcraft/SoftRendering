@@ -4,29 +4,63 @@
 #include <memory>
 #include <experimental/memory>
 #include "constants.h"
+using colorraw_t = glm::tvec3<uint8_t>;
+struct VertexBrut
+{
+    glm::ivec2 pos;
+    colorraw_t color;
+};
+struct Vertex
+{
+    Vertex(){}
+    Vertex(glm::vec4 _pos, glm::vec3 _color) : pos(_pos), color(_color) {}
+    virtual glm::vec4 getPosition() const {return pos;};
+    glm::vec4 pos;
+    glm::vec3 color;
+};
+struct VertexBuffer
+{
+    enum class Type{
+        Triangles,
+        TriangleStrip,
+        TriangleFan,
+        Lines,
+        LineFan
+    };
+    Type type;
+    std::vector<Vertex> verts;
+};
 struct Command
 {
     enum class Type{
         Clear,
-        DrawLine,
-        DrawTriangle,
+        DrawBuffer,
     };
+    Command(Type _type) : type(_type){}
     const Type type;
-    struct Data
-    {
-        glm::vec2 pos[3];
-        glm::tvec3<uint8_t> color;
-    } data;
+};
+struct ClearCommand : public Command
+{
+    using observer=std::experimental::observer_ptr<ClearCommand>;
+    ClearCommand(glm::vec3 _color=glm::vec3(0.f)) : Command(Command::Type::Clear), color(_color){}
+    glm::vec3 color;
+};
+struct DrawCommand : public Command
+{
+    using observer=std::experimental::observer_ptr<DrawCommand>;
+    DrawCommand() : Command(Command::Type::DrawBuffer){}
+    VertexBuffer vbo;
 };
 class CommandBuffer
 {
 public:
-    using observer_command=std::experimental::observer_ptr<Command>;
+    
     void reserve(size_t size);
-    observer_command clear_image(glm::vec3 color);
-    observer_command draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color);
-    observer_command draw_triangle(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec3 color);
-
+    ClearCommand::observer clear_image(glm::vec3 color);
+    DrawCommand::observer draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color);
+    DrawCommand::observer draw_triangle(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec3 color);
+    DrawCommand::observer draw_buffer(VertexBuffer);
+    
     void clear_buffer();
     const std::vector<std::unique_ptr<Command>>& get_buffer() const
     {return m_cmdBuffer;}
@@ -46,11 +80,11 @@ public:
     void draw_command_buffer(const CommandBuffer& cmdBuffer);
     void apply();
 private:
-    void clear_image(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
-    void draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
-    void draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd);
+    void clear_image(glm::tvec3<uint8_t>* pixs, const glm::vec3& cmd);
+    void draw_line(glm::tvec3<uint8_t>* pixs, const VertexBuffer& cmd);
+    void draw_triangle(glm::tvec3<uint8_t>* pixs, const VertexBuffer& cmd);
 
-    void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, glm::tvec3<uint8_t> color);
+    void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, std::pair<colorraw_t, colorraw_t> color);
     glm::ivec2 toScreenSpace(glm::vec2 p) 
     {
         return (p+1.f)*0.5f*glm::vec2(m_size);

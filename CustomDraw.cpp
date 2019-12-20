@@ -2,7 +2,12 @@
 #include "constants.h"
 #include <algorithm>
 #include <numeric>
-std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
+struct BresenhamLine
+{
+    std::vector<std::pair<int, int>> line;
+    size_t npoints=0;
+};
+BresenhamLine genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
 {
     // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
     bool reverse=false;
@@ -13,9 +18,10 @@ std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ive
     }
     glm::vec2 delta = pos.second-pos.first;
     if (delta.y==0)
-        return {{pos.first.x, pos.second.x}};
+        return {{{pos.first.x, pos.second.x}}, static_cast<size_t>(glm::abs(pos.first.x-pos.second.x))};
     
-    std::vector<std::pair<int, int>> result(glm::abs(pos.second.y-pos.first.y)+1);
+    BresenhamLine result;
+    result.line.resize(glm::abs(pos.second.y-pos.first.y)+1);
     if (delta.x==0)
     {
         if (pos.first.y>pos.second.y)
@@ -24,44 +30,63 @@ std::vector<std::pair<int, int>> genBresenhamLine(std::pair<glm::ivec2, glm::ive
         }
         int i=0;
         for (int y=pos.first.y, i=0;y<pos.second.y;++y, ++i)
-            result[i]={pos.first.x, pos.first.x};
+            result.line[i]={pos.first.x, pos.first.x};
+        result.npoints=result.line.size();
         return result;
     }
     float deltaErr = glm::abs(delta.y/delta.x);
     float error=0;
-    result[0].first=pos.first.x;
+    result.line[0].first=pos.first.x;
     for (int x=pos.first.x, i=0; x<pos.second.x;++x)
     {
         error+=deltaErr;
         if (error>= 0.5f)
             while (error>= 0.5f)
             {
-                result[i].second=x;
+                result.line[i].second=x;
+                result.npoints+=result.line[i].second-result.line[i].first+1;
                 error-=1.f;
-                result[++i].first=x+(error< 0.5f);
+                result.line[++i].first=x+(error< 0.5f);
             }
     }
-    result.back().second=pos.second.x;
+    result.line.back().second=pos.second.x;
+    result.npoints+=result.line.back().second-result.line.back().first+1;
     if (reverse)
-        return std::vector<std::pair<int, int>>(result.rbegin(), result.rend());
+        std::reverse(result.line.begin(), result.line.end());
     return result;
 }
-void CustomFrame::draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, glm::tvec3<uint8_t> color)
+template <typename VecT, typename T>
+VecT interp(VecT first, VecT second, T current, T total)
+{
+    return first*(total-current)/total+second*(current)/total;
+}
+void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> xs, std::pair<colorraw_t, colorraw_t> colors)
 {
     int yW=y*m_size.x;
     if (xs.second<0)
         return;
-    for (int x=glm::max(xs.first, 0); x<=xs.second && x<m_size.x;++x)
-        pixs[x+yW]=color;
+    if (xs.second==xs.first)
+    {
+        if (xs.first>=m_size.x)
+            return;
+        pixs[xs.first+yW]=colors.first;
+        return;
+    }
+    int total=xs.second-xs.first;
+    for (int x=glm::max(xs.first, 0), cx=x-xs.first; x<=xs.second && x<m_size.x;++x, ++cx)
+    {
+        glm::ivec3 newcolor = interp(glm::ivec3(colors.first), glm::ivec3(colors.second), cx, total);//glm::ivec3(colors.first)*(total-cx)/total+glm::ivec3(colors.second)*(cx)/total;
+        pixs[x+yW]=newcolor;
+    }
 }
-void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
+void CustomFrame::draw_line(colorraw_t* pixs, const VertexBuffer& vbo)
 {
-    std::pair<glm::ivec2, glm::ivec2> pos={toScreenSpace(cmd.pos[0]), toScreenSpace(cmd.pos[1])};
+    std::pair<glm::ivec2, glm::ivec2> pos={toScreenSpace(vbo.verts[0].pos), toScreenSpace(vbo.verts[1].pos)};
     auto bresLine = genBresenhamLine(pos);
     int signDeltaY=glm::sign(pos.second.y-pos.first.y);
     int y=pos.first.y;
     int i=0;
-    for(int i=0;i<bresLine.size();++i)
+    for(int i=0;i<bresLine.line.size();++i)
     {
         if (y<0)
         {
@@ -87,25 +112,25 @@ void CustomFrame::draw_line(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
                 continue;
             }
         }
-        draw_horizontal(pixs, y, bresLine[i], cmd.color);
+        draw_horizontal(pixs, y, bresLine.line[i], {colorraw_t(vbo.verts[0].color*255.f), colorraw_t(vbo.verts[1].color*255.f)});
         y+=signDeltaY;
     }
 
 }
-void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
+void CustomFrame::draw_triangle(colorraw_t* pixs, const VertexBuffer& vbo)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-    const auto flatTop = [&pixs, &cmd, this](glm::ivec2 pos[3], size_t offset=0){
-        glm::ivec2 posx[2]={pos[1], pos[2]};
-        if (pos[1].x<=pos[2].x)
-            posx[0]=pos[1], posx[1]=pos[2];
-        else
-            posx[0]=pos[2], posx[1]=pos[1];
-        std::vector<std::pair<int, int>> ligne[2]={genBresenhamLine({pos[0], posx[0]}), genBresenhamLine({pos[0], posx[1]})};
-        int signDeltaY=glm::sign(pos[1].y-pos[0].y);
-        int y=pos[0].y;
-        size_t maxy=glm::min(ligne[0].size(), ligne[1].size());
+    const auto flatTop = [&pixs, this](VertexBrut vertsb[3], size_t offset=0){
+        size_t indx[2]={1,2};
+        if (vertsb[1].pos.x>vertsb[2].pos.x)
+            indx[0]=2, indx[1]=1;
+        BresenhamLine ligne[2]={genBresenhamLine({vertsb[0].pos, vertsb[indx[0]].pos}), genBresenhamLine({vertsb[0].pos, vertsb[indx[1]].pos})};
+        int signDeltaY=glm::sign(vertsb[1].pos.y-vertsb[0].pos.y);
+        int y=vertsb[0].pos.y;
+        size_t maxy=glm::min(ligne[0].line.size(), ligne[1].line.size());
         size_t i=offset;
+        size_t iPoints1=0;
+        size_t iPoints2=0;
         for(;i<maxy;i++)
         {
             if (y<0)
@@ -133,34 +158,38 @@ void CustomFrame::draw_triangle(glm::tvec3<uint8_t>* pixs, const Command::Data& 
                     continue;
                 }
             }
-            int left=glm::min(ligne[0][i].first, ligne[1][i].second);
-            int right=glm::max(ligne[0][i].first, ligne[1][i].second);
-            draw_horizontal(pixs, y, {left, right}, cmd.color);
+            int left=glm::min(ligne[0].line[i].first, ligne[1].line[i].second);
+            int right=glm::max(ligne[0].line[i].first, ligne[1].line[i].second);
+            glm::ivec3 lColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[0]].color, iPoints1, ligne[0].npoints)), rColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[1]].color, iPoints2, ligne[1].npoints));
+            draw_horizontal(pixs, y, {left, right}, {lColor, rColor});
             y+=signDeltaY;
+            iPoints1+=ligne[0].line[i].second-ligne[0].line[i].first+1;
+            iPoints2+=ligne[1].line[i].second-ligne[1].line[i].first+1;
         }
         return i;
     };
-    glm::ivec2 pos[3]={toScreenSpace(cmd.pos[0]), toScreenSpace(cmd.pos[1]), toScreenSpace(cmd.pos[2])};
-    std::sort(std::begin(pos), std::end(pos), [](const glm::ivec2& p1, const glm::ivec2& p2) { return p1.y<p2.y; });
-    if (pos[1].y==pos[2].y)
-        flatTop(pos);
-    else if (pos[1].y==pos[0].y)
+    VertexBrut vertsb[3]={{toScreenSpace(vbo.verts[0].pos), vbo.verts[0].color*255.f}, {toScreenSpace(vbo.verts[1].pos), vbo.verts[1].color*255.f}, {toScreenSpace(vbo.verts[2].pos), vbo.verts[2].color*255.f}};
+    std::sort(std::begin(vertsb), std::end(vertsb), [](const VertexBrut& p1, const VertexBrut& p2) { return p1.pos.y<p2.pos.y; });
+    // colorraw_t color[3]={vbo.verts[0].color*255.f, vbo.verts[1].color*255.f,vbo.verts[2].color*255.f};
+    if (vertsb[1].pos.y==vertsb[2].pos.y)
+        flatTop(vertsb);
+    else if (vertsb[1].pos.y==vertsb[0].pos.y)
     {
-        std::swap(pos[0], pos[2]);
-        flatTop(pos);
+        std::swap(vertsb[0], vertsb[2]);
+        flatTop(vertsb);
     }
     else
     {
-        size_t offset = flatTop(pos);
+        size_t offset = flatTop(vertsb);
         int test=0;
-        std::swap(pos[2], pos[0]);
-        flatTop(pos);
+        std::swap(vertsb[2], vertsb[0]);
+        flatTop(vertsb);
     }
     
 }
-void CustomFrame::clear_image(glm::tvec3<uint8_t>* pixs, const Command::Data& cmd)
+void CustomFrame::clear_image(colorraw_t* pixs, const glm::vec3& color)
 {
     size_t s=m_size.x*m_size.y;
     for(int ix=0;ix<s;++ix)
-        pixs[ix]=cmd.color;
+        pixs[ix]=color;
 }

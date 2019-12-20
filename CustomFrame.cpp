@@ -54,13 +54,16 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
         switch(cmd->type)
         {
             case Command::Type::Clear:
-                clear_image(pixs, cmd->data);
+                clear_image(pixs, reinterpret_cast<ClearCommand*>(cmd.get())->color);
                 break;
-            case Command::Type::DrawLine:
-                draw_line(pixs, cmd->data);
-                break;
-            case Command::Type::DrawTriangle:
-                draw_triangle(pixs, cmd->data);
+            case Command::Type::DrawBuffer:
+            {
+                auto& vbo = reinterpret_cast<DrawCommand*>(cmd.get())->vbo;
+                if (vbo.type>=VertexBuffer::Type::Lines)
+                    draw_line(pixs, vbo);
+                else
+                    draw_triangle(pixs, vbo);
+            }
                 break;
             default:
                 break;
@@ -77,31 +80,42 @@ void CommandBuffer::reserve(size_t size)
 {
     m_cmdBuffer.reserve(size);
 }
-CommandBuffer::observer_command CommandBuffer::clear_image(glm::vec3 color)
+std::experimental::observer_ptr<ClearCommand> CommandBuffer::clear_image(glm::vec3 color)
 {
-    std::unique_ptr<Command> cmd(new Command{Command::Type::Clear});
-    cmd->data.color=color*255.f;
+    std::unique_ptr<ClearCommand> cmd(new ClearCommand(color));
+    std::experimental::observer_ptr<ClearCommand> res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
-    return CommandBuffer::observer_command(m_cmdBuffer.back().get());
+    return res;
 }
-CommandBuffer::observer_command CommandBuffer::draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color)
+std::experimental::observer_ptr<DrawCommand>  CommandBuffer::draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color)
 {
-    std::unique_ptr<Command> cmd(new Command{Command::Type::DrawLine});
-    cmd->data.pos[0]=pos1;
-    cmd->data.pos[1]=pos2;
-    cmd->data.color=color*255.f;
+    std::unique_ptr<DrawCommand> cmd(new DrawCommand);
+    cmd->vbo.verts.resize(2);
+    cmd->vbo.verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
+    cmd->vbo.verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
     m_cmdBuffer.push_back(std::move(cmd));
-    return CommandBuffer::observer_command(m_cmdBuffer.back().get());
+    std::experimental::observer_ptr<DrawCommand> res(cmd.get());
+    m_cmdBuffer.push_back(std::move(cmd));
+    return res;
 }
-CommandBuffer::observer_command CommandBuffer::draw_triangle(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec3 color)
+DrawCommand::observer CommandBuffer::draw_triangle(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec3 color)
 {
-    std::unique_ptr<Command> cmd(new Command{Command::Type::DrawTriangle});
-    cmd->data.pos[0]=pos1;
-    cmd->data.pos[1]=pos2;
-    cmd->data.pos[2]=pos3;
-    cmd->data.color=color*255.f;
+    std::unique_ptr<DrawCommand> cmd(new DrawCommand);
+    cmd->vbo.verts.resize(3);
+    cmd->vbo.verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
+    cmd->vbo.verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
+    cmd->vbo.verts[2]=Vertex{glm::vec4(pos3,0.f,1.f), color};
+    DrawCommand::observer res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
-    return CommandBuffer::observer_command(m_cmdBuffer.back().get());
+    return res;
+}
+DrawCommand::observer CommandBuffer::draw_buffer(VertexBuffer vbo)
+{
+    std::unique_ptr<DrawCommand> cmd(new DrawCommand);
+    std::swap(vbo, cmd->vbo);
+    DrawCommand::observer res(cmd.get());
+    m_cmdBuffer.push_back(std::move(cmd));
+    return res;
 }
 void CustomFrame::setImageSize(glm::uvec2 size)
 {

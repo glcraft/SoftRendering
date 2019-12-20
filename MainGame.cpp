@@ -17,9 +17,21 @@ void MainGame::init()
     constexpr int TW=Constants::TextureWidth-1, TH = Constants::TextureHeight-1;
     m_cframe = std::unique_ptr<CustomFrame>(new CustomFrame);
     m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
-    m_cmdBuffer.draw_triangle({Constants::TextureWidth-1,0}, {Constants::TextureWidth/2, Constants::TextureHeight-1}, {0, Constants::TextureHeight-1}, {0,1,0});
-    m_cmdBuffer.draw_triangle({0,0}, {TW/2, 0}, {TW, TH}, {1,0,0});
-    cmdTest = m_cmdBuffer.draw_triangle({0,TH*40/100}, {TW*80/100, 0}, {TW*60/100, TH}, {0,0,1});
+    m_cmdBuffer.draw_triangle({1,-1}, {0, 0.8f}, {-1,1}, {0,1,0});
+    m_cmdBuffer.draw_triangle({-1,-1}, {0, -0.8f}, {1,1}, {1,0,0});
+    VertexBuffer vbo;
+    vbo.type=VertexBuffer::Type::Triangles;
+    vbo.verts.resize(3);
+    for (int i=0;i<3;i++)
+        {
+            float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + 1.f;
+            glm::vec2 pos(glm::cos(angle)*0.8f, glm::sin(angle)*0.8f);
+            vbo.verts[i].pos=glm::vec4(pos, 0.f, 1.f);
+        }
+    vbo.verts[0].color=glm::vec3(1,0,0);
+    vbo.verts[1].color=glm::vec3(0,1,0);
+    vbo.verts[2].color=glm::vec3(0,0,1);
+    cmdTest = m_cmdBuffer.draw_buffer(vbo);
 }
 void MainGame::display()
 {
@@ -39,14 +51,20 @@ void MainGame::clear()
 
 void MainGame::render()
 {
+    if (cmdTest && 0)
+        for (int i=0;i<3;i++)
+        {
+            float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + glfwGetTime()*5.f;
+            float angle2 = glfwGetTime()*2;
+            glm::vec2 pos(glm::cos(angle)*0.4f+glm::cos(angle2), glm::sin(angle)*0.4f+glm::sin(angle2));
+            cmdTest->vbo.verts[i].pos=glm::vec4(pos, 0.f, 1.f);
+        }
     for (int i=0;i<3;i++)
     {
         float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + glfwGetTime();
-        glm::vec2 pos(glm::cos(angle)*20+40, glm::sin(angle)*10+30);
-        cmdTest->data.pos[i]=glm::ivec2(pos);
+        glm::vec2 pos(glm::cos(angle)*0.8f, glm::sin(angle)*0.8f);
+        cmdTest->vbo.verts[i].pos=glm::vec4(pos, 0.f, 1.f);
     }
-        
-
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
     m_cframe->draw_command_buffer(m_cmdBuffer);
