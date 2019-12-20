@@ -61,7 +61,7 @@ void MainGame::render()
         }
     for (int i=0;i<3;i++)
     {
-        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + glfwGetTime();
+        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + glfwGetTime()*0.5f;
         glm::vec2 pos(glm::cos(angle)*0.8f, glm::sin(angle)*0.8f);
         cmdTest->vbo.verts[i].pos=glm::vec4(pos, 0.f, 1.f);
     }

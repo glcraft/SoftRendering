@@ -160,7 +160,9 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const VertexBuffer& vbo)
             }
             int left=glm::min(ligne[0].line[i].first, ligne[1].line[i].second);
             int right=glm::max(ligne[0].line[i].first, ligne[1].line[i].second);
-            glm::ivec3 lColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[0]].color, iPoints1, ligne[0].npoints)), rColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[1]].color, iPoints2, ligne[1].npoints));
+            glm::ivec3 
+                lColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[0]].color, iPoints1+glm::max(0,(ligne[0].line[i].second-ligne[0].line[i].first)), ligne[0].npoints)), 
+                rColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[1]].color, iPoints2+glm::max(0,(ligne[1].line[i].second-ligne[1].line[i].first)), ligne[1].npoints));//
             draw_horizontal(pixs, y, {left, right}, {lColor, rColor});
             y+=signDeltaY;
             iPoints1+=ligne[0].line[i].second-ligne[0].line[i].first+1;
@@ -170,7 +172,6 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const VertexBuffer& vbo)
     };
     VertexBrut vertsb[3]={{toScreenSpace(vbo.verts[0].pos), vbo.verts[0].color*255.f}, {toScreenSpace(vbo.verts[1].pos), vbo.verts[1].color*255.f}, {toScreenSpace(vbo.verts[2].pos), vbo.verts[2].color*255.f}};
     std::sort(std::begin(vertsb), std::end(vertsb), [](const VertexBrut& p1, const VertexBrut& p2) { return p1.pos.y<p2.pos.y; });
-    // colorraw_t color[3]={vbo.verts[0].color*255.f, vbo.verts[1].color*255.f,vbo.verts[2].color*255.f};
     if (vertsb[1].pos.y==vertsb[2].pos.y)
         flatTop(vertsb);
     else if (vertsb[1].pos.y==vertsb[0].pos.y)
