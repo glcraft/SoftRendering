@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
-#include <experimental/memory>
+#include "memory.hpp"
 #include "constants.h"
 using colorraw_t = glm::tvec3<uint8_t>;
 struct VertexBrut
@@ -41,20 +41,19 @@ struct Command
 };
 struct ClearCommand : public Command
 {
-    using observer=std::experimental::observer_ptr<ClearCommand>;
+    using observer=_std::observer_ptr<ClearCommand>;
     ClearCommand(glm::vec3 _color=glm::vec3(0.f)) : Command(Command::Type::Clear), color(_color){}
     glm::vec3 color;
 };
 struct DrawCommand : public Command
 {
-    using observer=std::experimental::observer_ptr<DrawCommand>;
+    using observer=_std::observer_ptr<DrawCommand>;
     DrawCommand() : Command(Command::Type::DrawBuffer){}
     VertexBuffer vbo;
 };
 class CommandBuffer
 {
 public:
-    
     void reserve(size_t size);
     ClearCommand::observer clear_image(glm::vec3 color);
     DrawCommand::observer draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color);

@@ -69,7 +69,6 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
                 break;
         }
     }
-
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     apply();
@@ -80,21 +79,21 @@ void CommandBuffer::reserve(size_t size)
 {
     m_cmdBuffer.reserve(size);
 }
-std::experimental::observer_ptr<ClearCommand> CommandBuffer::clear_image(glm::vec3 color)
+_std::observer_ptr<ClearCommand> CommandBuffer::clear_image(glm::vec3 color)
 {
     std::unique_ptr<ClearCommand> cmd(new ClearCommand(color));
-    std::experimental::observer_ptr<ClearCommand> res(cmd.get());
+    _std::observer_ptr<ClearCommand> res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
     return res;
 }
-std::experimental::observer_ptr<DrawCommand>  CommandBuffer::draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color)
+_std::observer_ptr<DrawCommand>  CommandBuffer::draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color)
 {
     std::unique_ptr<DrawCommand> cmd(new DrawCommand);
     cmd->vbo.verts.resize(2);
     cmd->vbo.verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
     cmd->vbo.verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
     m_cmdBuffer.push_back(std::move(cmd));
-    std::experimental::observer_ptr<DrawCommand> res(cmd.get());
+    _std::observer_ptr<DrawCommand> res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
     return res;
 }
