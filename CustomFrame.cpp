@@ -58,11 +58,11 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
                 break;
             case Command::Type::DrawBuffer:
             {
-                auto& vbo = reinterpret_cast<DrawCommand*>(cmd.get())->vbo;
-                if (vbo.type>=VertexBuffer::Type::Lines)
-                    draw_line(pixs, vbo);
+                auto drawcmd = reinterpret_cast<DrawCommand*>(cmd.get());
+                if (drawcmd->vbo.type>=VertexBuffer::Type::Lines)
+                    draw_line(pixs, drawcmd->vbo);
                 else
-                    draw_triangle(pixs, vbo);
+                    draw_triangle(pixs, *drawcmd);
             }
                 break;
             default:
@@ -73,7 +73,6 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     apply();
 }
-
 
 void CommandBuffer::reserve(size_t size)
 {
@@ -92,6 +91,7 @@ _std::observer_ptr<DrawCommand>  CommandBuffer::draw_line(glm::vec2 pos1, glm::v
     cmd->vbo.verts.resize(2);
     cmd->vbo.verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
     cmd->vbo.verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
+    cmd->vertShader = std::unique_ptr<VertexShader>(new VertexShader);
     m_cmdBuffer.push_back(std::move(cmd));
     _std::observer_ptr<DrawCommand> res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
@@ -104,6 +104,7 @@ DrawCommand::observer CommandBuffer::draw_triangle(glm::vec2 pos1, glm::vec2 pos
     cmd->vbo.verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
     cmd->vbo.verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
     cmd->vbo.verts[2]=Vertex{glm::vec4(pos3,0.f,1.f), color};
+    cmd->vertShader = std::unique_ptr<VertexShader>(new VertexShader);
     DrawCommand::observer res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
     return res;
@@ -113,6 +114,7 @@ DrawCommand::observer CommandBuffer::draw_buffer(VertexBuffer vbo)
     std::unique_ptr<DrawCommand> cmd(new DrawCommand);
     std::swap(vbo, cmd->vbo);
     DrawCommand::observer res(cmd.get());
+    cmd->vertShader = std::unique_ptr<VertexShader>(new VertexShader);
     m_cmdBuffer.push_back(std::move(cmd));
     return res;
 }

@@ -18,6 +18,25 @@ struct Vertex
     glm::vec4 pos;
     glm::vec3 color;
 };
+template <typename InputType, typename OutputType>
+class Shader
+{
+public:
+    virtual OutputType get(InputType){return OutputType();};
+};
+class VertexShader : public Shader<Vertex, Vertex>
+{
+public:
+    virtual Vertex get(Vertex) override;
+    glm::mat4 m_modelmat=glm::mat4(1.f);
+    glm::mat4 m_viewmat=glm::mat4(1.f);
+    glm::mat4 m_projmat=glm::mat4(1.f);
+};
+class FragmentShader : public Shader<Vertex, glm::ivec3>
+{
+public:
+    virtual glm::ivec3 get(Vertex) override;
+};
 struct VertexBuffer
 {
     enum class Type{
@@ -50,6 +69,8 @@ struct DrawCommand : public Command
     using observer=_std::observer_ptr<DrawCommand>;
     DrawCommand() : Command(Command::Type::DrawBuffer){}
     VertexBuffer vbo;
+    std::unique_ptr<VertexShader> vertShader;
+    std::unique_ptr<FragmentShader> fragShader;
 };
 class CommandBuffer
 {
@@ -81,7 +102,7 @@ public:
 private:
     void clear_image(glm::tvec3<uint8_t>* pixs, const glm::vec3& cmd);
     void draw_line(glm::tvec3<uint8_t>* pixs, const VertexBuffer& cmd);
-    void draw_triangle(glm::tvec3<uint8_t>* pixs, const VertexBuffer& cmd);
+    void draw_triangle(glm::tvec3<uint8_t>* pixs, const DrawCommand& cmd);
 
     void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, std::pair<colorraw_t, colorraw_t> color);
     glm::ivec2 toScreenSpace(glm::vec2 p) 

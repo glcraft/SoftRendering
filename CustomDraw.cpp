@@ -29,7 +29,7 @@ BresenhamLine genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
             std::swap(pos.first, pos.second);
         }
         int i=0;
-        for (int y=pos.first.y, i=0;y<pos.second.y;++y, ++i)
+        for (int y=pos.first.y, i=0;y<=pos.second.y;++y, ++i)
             result.line[i]={pos.first.x, pos.first.x};
         result.npoints=result.line.size();
         return result;
@@ -117,7 +117,7 @@ void CustomFrame::draw_line(colorraw_t* pixs, const VertexBuffer& vbo)
     }
 
 }
-void CustomFrame::draw_triangle(colorraw_t* pixs, const VertexBuffer& vbo)
+void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
     const auto flatTop = [&pixs, this](VertexBrut vertsb[3], size_t offset=0){
@@ -174,7 +174,9 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const VertexBuffer& vbo)
         }
         return i;
     };
-    VertexBrut vertsb[3]={{toScreenSpace(vbo.verts[0].pos), vbo.verts[0].color*255.f}, {toScreenSpace(vbo.verts[1].pos), vbo.verts[1].color*255.f}, {toScreenSpace(vbo.verts[2].pos), vbo.verts[2].color*255.f}};
+    const VertexBuffer& vbo = cmd.vbo;
+    Vertex trans_vpos[3] = {cmd.vertShader->get(vbo.verts[0]), cmd.vertShader->get(vbo.verts[1]), cmd.vertShader->get(vbo.verts[2])};
+    VertexBrut vertsb[3]={{toScreenSpace(trans_vpos[0].pos), trans_vpos[0].color*255.f}, {toScreenSpace(trans_vpos[1].pos), trans_vpos[1].color*255.f}, {toScreenSpace(trans_vpos[2].pos), trans_vpos[2].color*255.f}};
     std::sort(std::begin(vertsb), std::end(vertsb), [](const VertexBrut& p1, const VertexBrut& p2) { return p1.pos.y<p2.pos.y; });
     if (vertsb[1].pos.y==vertsb[2].pos.y)
         flatTop(vertsb);
@@ -186,8 +188,7 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const VertexBuffer& vbo)
     else
     {
         size_t offset = flatTop(vertsb);
-        int test=0;
-        std::swap(vertsb[2], vertsb[0]);
+        std::swap(vertsb[0], vertsb[2]);
         flatTop(vertsb);
     }
     
@@ -197,4 +198,9 @@ void CustomFrame::clear_image(colorraw_t* pixs, const glm::vec3& color)
     size_t s=m_size.x*m_size.y;
     for(int ix=0;ix<s;++ix)
         pixs[ix]=color;
+}
+Vertex VertexShader::get(Vertex vert)
+{
+    vert.pos=m_projmat*m_viewmat*m_modelmat*vert.pos;
+    return vert;
 }

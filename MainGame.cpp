@@ -5,6 +5,7 @@
 #include <optional>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 void MainGame::init()
 {
     glfwInit();
@@ -51,19 +52,11 @@ void MainGame::clear()
 
 void MainGame::render()
 {
-    if (cmdTest && 0)
-        for (int i=0;i<3;i++)
-        {
-            float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + glfwGetTime()*5.f;
-            float angle2 = glfwGetTime()*2;
-            glm::vec2 pos(glm::cos(angle)*0.4f+glm::cos(angle2), glm::sin(angle)*0.4f+glm::sin(angle2));
-            cmdTest->vbo.verts[i].pos=glm::vec4(pos, 0.f, 1.f);
-        }
-    for (int i=0;i<3;i++)
+    for (int i=0;i<1;i++)
     {
-        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + glfwGetTime()*0.5f;
-        glm::vec2 pos(glm::cos(angle)*0.8f, glm::sin(angle)*0.8f);
-        cmdTest->vbo.verts[i].pos=glm::vec4(pos, 0.f, 1.f);
+        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + static_cast<float>(glfwGetTime())*1.5f;
+        glm::mat4 identity(1.f);
+        cmdTest->vertShader->m_modelmat = glm::rotate(identity, angle, {0,1,1});
     }
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
