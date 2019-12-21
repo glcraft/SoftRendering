@@ -122,12 +122,16 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const VertexBuffer& vbo)
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
     const auto flatTop = [&pixs, this](VertexBrut vertsb[3], size_t offset=0){
         size_t indx[2]={1,2};
-        if (vertsb[1].pos.x>vertsb[2].pos.x)
-            indx[0]=2, indx[1]=1;
+        
         BresenhamLine ligne[2]={genBresenhamLine({vertsb[0].pos, vertsb[indx[0]].pos}), genBresenhamLine({vertsb[0].pos, vertsb[indx[1]].pos})};
+        size_t maxy=glm::min(ligne[0].line.size(), ligne[1].line.size());
+        if (ligne[0].line[maxy-1].first>ligne[1].line[maxy-1].first)
+        {
+            std::swap(ligne[0], ligne[1]);
+            indx[0]=2, indx[1]=1;
+        }
         int signDeltaY=glm::sign(vertsb[1].pos.y-vertsb[0].pos.y);
         int y=vertsb[0].pos.y;
-        size_t maxy=glm::min(ligne[0].line.size(), ligne[1].line.size());
         size_t i=offset;
         size_t iPoints1=0;
         size_t iPoints2=0;
