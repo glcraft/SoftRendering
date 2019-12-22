@@ -18,7 +18,7 @@ BresenhamLine genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
     }
     glm::vec2 delta = pos.second-pos.first;
     if (delta.y==0)
-        return {{{pos.first.x, pos.second.x}}, static_cast<size_t>(glm::abs(pos.first.x-pos.second.x))};
+        return {{{pos.first.x, pos.second.x}}, static_cast<size_t>(glm::abs(pos.first.x-pos.second.x)+1)};
     
     BresenhamLine result;
     result.line.resize(glm::abs(pos.second.y-pos.first.y)+1);
