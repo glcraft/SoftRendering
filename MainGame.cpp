@@ -26,7 +26,7 @@ void MainGame::init()
     
     for (size_t i1=0;i1<3;i1++)
     {
-        const float size=0.5f;
+        const float size=0.6f;
         size_t reali1=i1*3;
         float angle1 = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
         glm::vec2 pos1(glm::cos(angle1)*size, glm::sin(angle1)*size);
@@ -63,9 +63,9 @@ void MainGame::render()
 {
     for (int i=0;i<1;i++)
     {
-        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + static_cast<float>(glfwGetTime())*1.5f;
+        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + static_cast<float>(glfwGetTime())*0.5f;
         glm::mat4 identity(1.f);
-        cmdTest->vertShader->m_modelmat = glm::rotate(identity, angle, {0,1,1});
+        cmdTest->vertShader->m_modelmat = glm::rotate(identity, angle, {0,0,1});
     }
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);

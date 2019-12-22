@@ -75,7 +75,7 @@ void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> x
     int total=xs.second-xs.first;
     for (int x=glm::max(xs.first, 0), cx=x-xs.first; x<=xs.second && x<m_size.x;++x, ++cx)
     {
-        glm::ivec3 newcolor = interp(glm::ivec3(colors.first), glm::ivec3(colors.second), cx, total);//glm::ivec3(colors.first)*(total-cx)/total+glm::ivec3(colors.second)*(cx)/total;
+        glm::ivec3 newcolor = interp(glm::ivec3(colors.first), glm::ivec3(colors.second), cx, total);
         pixs[x+yW]=newcolor;
     }
 }
@@ -144,6 +144,11 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
                 else
                 {
                     int ecart = -y;
+                    for(int iLine=0;iLine<=ecart;iLine++)
+                    {
+                        iPoints1+=ligne[0].line[i+iLine].second-ligne[0].line[i+iLine].first+1;
+                        iPoints2+=ligne[1].line[i+iLine].second-ligne[1].line[i+iLine].first+1;
+                    }
                     y=0;
                     i+=ecart;
                     continue;
@@ -155,8 +160,13 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
                     break;
                 else
                 {
-                    int resultCalc=y-m_size.y-1;
+                    int resultCalc=y-static_cast<int>(m_size.y)-1;
                     int ecart = glm::abs(resultCalc);
+                    for(int iLine=0;iLine<=ecart;iLine++)
+                        {
+                            iPoints1+=ligne[0].line[i+iLine].second-ligne[0].line[i+iLine].first+1;
+                            iPoints2+=ligne[1].line[i+iLine].second-ligne[1].line[i+iLine].first+1;
+                        }
                     y=m_size.y-1;
                     i+=ecart;
                     continue;
