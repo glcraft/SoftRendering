@@ -132,7 +132,7 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
         }
         int signDeltaY=glm::sign(vertsb[1].pos.y-vertsb[0].pos.y);
         int y=vertsb[0].pos.y;
-        size_t i=offset;
+        size_t i=0;
         size_t iPoints1=0;
         size_t iPoints2=0;
         for(;i<maxy;i++)
@@ -143,7 +143,7 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
                     break;
                 else
                 {
-                    int ecart = -y;
+                    int ecart = -y-1;
                     for(int iLine=0;iLine<=ecart;iLine++)
                     {
                         iPoints1+=ligne[0].line[i+iLine].second-ligne[0].line[i+iLine].first+1;
@@ -160,13 +160,12 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
                     break;
                 else
                 {
-                    int resultCalc=y-static_cast<int>(m_size.y)-1;
-                    int ecart = glm::abs(resultCalc);
+                    int ecart = y-static_cast<int>(m_size.y-1)-1;
                     for(int iLine=0;iLine<=ecart;iLine++)
-                        {
-                            iPoints1+=ligne[0].line[i+iLine].second-ligne[0].line[i+iLine].first+1;
-                            iPoints2+=ligne[1].line[i+iLine].second-ligne[1].line[i+iLine].first+1;
-                        }
+                    {
+                        iPoints1+=ligne[0].line[i+iLine].second-ligne[0].line[i+iLine].first+1;
+                        iPoints2+=ligne[1].line[i+iLine].second-ligne[1].line[i+iLine].first+1;
+                    }
                     y=m_size.y-1;
                     i+=ecart;
                     continue;
