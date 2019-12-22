@@ -8,13 +8,18 @@ CustomFrame::CustomFrame(glm::uvec2 size)
     glGenFramebuffers(1, &FBO);
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     if (auto status = glCheckFramebufferStatus(FBO))
         std::cout << "FrameBuffer error " << status << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     setImageSize(size);
 }
 CustomFrame::~CustomFrame()
@@ -120,6 +125,7 @@ DrawCommand::observer CommandBuffer::draw_buffer(VertexBuffer vbo)
 }
 void CustomFrame::setImageSize(glm::uvec2 size)
 {
+    size+=size%glm::uvec2(2);
     m_size=size;
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO);
     glBufferData(GL_PIXEL_UNPACK_BUFFER, size.x*size.y*3, nullptr, GL_STREAM_DRAW);
@@ -131,8 +137,9 @@ void CustomFrame::setImageSize(glm::uvec2 size)
             pixs[i] = rand()%256;
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     }
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 #endif
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }

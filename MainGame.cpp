@@ -15,7 +15,6 @@ void MainGame::init()
     glewExperimental = true;
     glewInit();
 
-    constexpr int TW=Constants::TextureWidth-1, TH = Constants::TextureHeight-1;
     m_cframe = std::unique_ptr<CustomFrame>(new CustomFrame);
     m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
     m_cmdBuffer.draw_triangle({1,-1}, {0, 0.8f}, {-1,1}, {0,0.5f,0});
@@ -26,7 +25,7 @@ void MainGame::init()
     
     for (size_t i1=0;i1<3;i1++)
     {
-        const float size=0.6f;
+        const float size=0.5f;
         size_t reali1=i1*3;
         float angle1 = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
         glm::vec2 pos1(glm::cos(angle1)*size, glm::sin(angle1)*size);
@@ -42,6 +41,7 @@ void MainGame::init()
         vbo.verts[reali1+2].color=glm::vec3(0,0,1);
     }
     cmdTest = m_cmdBuffer.draw_buffer(vbo);
+    cmdTest->vertShader->m_viewmat = glm::ortho(-16.f/9.f, 16.f/9.f, -1.f, 1.f);
 }
 void MainGame::display()
 {
@@ -63,9 +63,10 @@ void MainGame::render()
 {
     for (int i=0;i<1;i++)
     {
-        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + static_cast<float>(glfwGetTime())*0.5f;
-        glm::mat4 identity(1.f);
-        cmdTest->vertShader->m_modelmat = glm::rotate(identity, angle, {0,0,1});
+        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + static_cast<float>(glfwGetTime())*1.f;
+        cmdTest->vertShader->m_modelmat=glm::mat4(1.f);
+        cmdTest->vertShader->m_modelmat = glm::rotate(cmdTest->vertShader->m_modelmat, angle*0.2f, {0,1,0});
+        cmdTest->vertShader->m_modelmat = glm::rotate(cmdTest->vertShader->m_modelmat, angle, {0,0,1});
     }
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
