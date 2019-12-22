@@ -18,20 +18,29 @@ void MainGame::init()
     constexpr int TW=Constants::TextureWidth-1, TH = Constants::TextureHeight-1;
     m_cframe = std::unique_ptr<CustomFrame>(new CustomFrame);
     m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
-    m_cmdBuffer.draw_triangle({1,-1}, {0, 0.8f}, {-1,1}, {0,1,0});
-    m_cmdBuffer.draw_triangle({-1,-1}, {0, -0.8f}, {1,1}, {1,0,0});
+    m_cmdBuffer.draw_triangle({1,-1}, {0, 0.8f}, {-1,1}, {0,0.5f,0});
+    m_cmdBuffer.draw_triangle({-1,-1}, {0, -0.8f}, {1,1}, {0.5f,0,0});
     VertexBuffer vbo;
     vbo.type=VertexBuffer::Type::Triangles;
-    vbo.verts.resize(3);
-    for (int i=0;i<3;i++)
+    vbo.verts.resize(9);
+    
+    for (size_t i1=0;i1<3;i1++)
+    {
+        const float size=0.5f;
+        size_t reali1=i1*3;
+        float angle1 = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
+        glm::vec2 pos1(glm::cos(angle1)*size, glm::sin(angle1)*size);
+
+        for (size_t i2=0;i2<3;i2++)
         {
-            float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + 1.f;
-            glm::vec2 pos(glm::cos(angle)*0.8f, glm::sin(angle)*0.8f);
-            vbo.verts[i].pos=glm::vec4(pos, 0.f, 1.f);
+            float angle = static_cast<float>(i2-i1+3)/3.f*2*glm::pi<float>() + 1.f;
+            glm::vec2 pos(glm::cos(angle)*size, glm::sin(angle)*size);
+            vbo.verts[reali1+i2].pos=glm::vec4(pos1+pos, 0.f, 1.f);
         }
-    vbo.verts[0].color=glm::vec3(1,0,0);
-    vbo.verts[1].color=glm::vec3(0,1,0);
-    vbo.verts[2].color=glm::vec3(0,0,1);
+        vbo.verts[reali1+0].color=glm::vec3(1,0,0);
+        vbo.verts[reali1+1].color=glm::vec3(0,1,0);
+        vbo.verts[reali1+2].color=glm::vec3(0,0,1);
+    }
     cmdTest = m_cmdBuffer.draw_buffer(vbo);
 }
 void MainGame::display()

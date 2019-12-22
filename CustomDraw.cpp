@@ -175,23 +175,34 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
         return i;
     };
     const VertexBuffer& vbo = cmd.vbo;
-    Vertex trans_vpos[3] = {cmd.vertShader->get(vbo.verts[0]), cmd.vertShader->get(vbo.verts[1]), cmd.vertShader->get(vbo.verts[2])};
-    VertexBrut vertsb[3]={{toScreenSpace(trans_vpos[0].pos), trans_vpos[0].color*255.f}, {toScreenSpace(trans_vpos[1].pos), trans_vpos[1].color*255.f}, {toScreenSpace(trans_vpos[2].pos), trans_vpos[2].color*255.f}};
-    std::sort(std::begin(vertsb), std::end(vertsb), [](const VertexBrut& p1, const VertexBrut& p2) { return p1.pos.y<p2.pos.y; });
-    if (vertsb[1].pos.y==vertsb[2].pos.y)
-        flatTop(vertsb);
-    else if (vertsb[1].pos.y==vertsb[0].pos.y)
+    size_t nbVertsMax=vbo.verts.size()-2;
+    for (size_t iTri=0;iTri<nbVertsMax;iTri+=3)
     {
-        std::swap(vertsb[0], vertsb[2]);
-        flatTop(vertsb);
+        Vertex trans_vpos[3] = {
+            cmd.vertShader->get(vbo.verts[iTri+0]), 
+            cmd.vertShader->get(vbo.verts[iTri+1]), 
+            cmd.vertShader->get(vbo.verts[iTri+2])
+        };
+        VertexBrut vertsb[3]={
+            {toScreenSpace(trans_vpos[0].pos), trans_vpos[0].color*255.f}, 
+            {toScreenSpace(trans_vpos[1].pos), trans_vpos[1].color*255.f}, 
+            {toScreenSpace(trans_vpos[2].pos), trans_vpos[2].color*255.f}
+        };
+        std::sort(std::begin(vertsb), std::end(vertsb), [](const VertexBrut& p1, const VertexBrut& p2) { return p1.pos.y<p2.pos.y; });
+        if (vertsb[1].pos.y==vertsb[2].pos.y)
+            flatTop(vertsb);
+        else if (vertsb[1].pos.y==vertsb[0].pos.y)
+        {
+            std::swap(vertsb[0], vertsb[2]);
+            flatTop(vertsb);
+        }
+        else
+        {
+            size_t offset = flatTop(vertsb);
+            std::swap(vertsb[0], vertsb[2]);
+            flatTop(vertsb);
+        }
     }
-    else
-    {
-        size_t offset = flatTop(vertsb);
-        std::swap(vertsb[0], vertsb[2]);
-        flatTop(vertsb);
-    }
-    
 }
 void CustomFrame::clear_image(colorraw_t* pixs, const glm::vec3& color)
 {
