@@ -65,7 +65,7 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
             {
                 auto drawcmd = reinterpret_cast<DrawCommand*>(cmd.get());
                 if (drawcmd->vbo.type>=VertexBuffer::Type::Lines)
-                    draw_line(pixs, drawcmd->vbo);
+                    draw_line(pixs, *drawcmd);
                 else
                     draw_triangle(pixs, *drawcmd);
             }

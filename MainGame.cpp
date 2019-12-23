@@ -19,13 +19,16 @@ void MainGame::init()
     m_cmdBuffer.clear_image(glm::tvec3<uint8_t>(0,0,0));
     m_cmdBuffer.draw_triangle({1,-1}, {0, 0.8f}, {-1,1}, {0,0.5f,0});
     m_cmdBuffer.draw_triangle({-1,-1}, {0, -0.8f}, {1,1}, {0.5f,0,0});
+
+    glm::mat4 viewmat = glm::ortho(-16.f/9.f, 16.f/9.f, -1.f, 1.f);
+    const float size=0.5f;
+    
     VertexBuffer vbo;
     vbo.type=VertexBuffer::Type::Triangles;
     vbo.verts.resize(9);
     
     for (size_t i1=0;i1<3;i1++)
     {
-        const float size=0.5f;
         size_t reali1=i1*3;
         float angle1 = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
         glm::vec2 pos1(glm::cos(angle1)*size, glm::sin(angle1)*size);
@@ -40,8 +43,28 @@ void MainGame::init()
         vbo.verts[reali1+1].color=glm::vec3(0,1,0);
         vbo.verts[reali1+2].color=glm::vec3(0,0,1);
     }
-    cmdTest = m_cmdBuffer.draw_buffer(vbo);
-    cmdTest->vertShader->m_viewmat = glm::ortho(-16.f/9.f, 16.f/9.f, -1.f, 1.f);
+    cmdTri = m_cmdBuffer.draw_buffer(vbo);
+    cmdTri->vertShader->m_viewmat = viewmat;
+
+    VertexBuffer vbolines;
+    vbolines.type=VertexBuffer::Type::LineStrip;
+    vbolines.verts.resize(9);
+    
+    for (size_t i1=0;i1<=8;i1++)
+    {
+        const float sizeLine=size-0.1f;
+        float angle = static_cast<float>(i1)/8.f*2*glm::pi<float>() + 1.f;
+        glm::vec2 pos(glm::cos(angle)*sizeLine, glm::sin(angle)*sizeLine);
+        vbolines.verts[i1].pos=glm::vec4(pos, 0.f, 1.f);
+    }
+    vbolines.verts[0].color=glm::vec3(1,0,0);
+    vbolines.verts[1].color=glm::vec3(0,1,0);
+    vbolines.verts[2].color=glm::vec3(0,0,1);
+    vbolines.verts[3].color=glm::vec3(1,0,0);
+    cmdLines = m_cmdBuffer.draw_buffer(vbolines);
+    cmdLines->vertShader->m_viewmat = viewmat;
+
+    
 }
 void MainGame::display()
 {
@@ -61,12 +84,12 @@ void MainGame::clear()
 
 void MainGame::render()
 {
-    for (int i=0;i<1;i++)
     {
-        float angle = static_cast<float>(i)/3.f*2*glm::pi<float>() + static_cast<float>(glfwGetTime())*1.f;
-        cmdTest->vertShader->m_modelmat=glm::mat4(1.f);
-        cmdTest->vertShader->m_modelmat = glm::rotate(cmdTest->vertShader->m_modelmat, angle*0.2f, {0,1,0});
-        cmdTest->vertShader->m_modelmat = glm::rotate(cmdTest->vertShader->m_modelmat, angle, {0,0,1});
+        float angle = static_cast<float>(glfwGetTime())*1.f;
+        cmdTri->vertShader->m_modelmat=glm::mat4(1.f);
+        // cmdTri->vertShader->m_modelmat = glm::rotate(cmdTri->vertShader->m_modelmat, angle*0.2f, {0,1,0});
+        cmdTri->vertShader->m_modelmat = glm::rotate(cmdTri->vertShader->m_modelmat, angle, {0,0,1});
+        cmdLines->vertShader->m_modelmat=cmdTri->vertShader->m_modelmat;
     }
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);

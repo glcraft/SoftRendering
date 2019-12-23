@@ -79,43 +79,100 @@ void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> x
         pixs[x+yW]=newcolor;
     }
 }
-void CustomFrame::draw_line(colorraw_t* pixs, const VertexBuffer& vbo)
+void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
 {
-    std::pair<glm::ivec2, glm::ivec2> pos={toScreenSpace(vbo.verts[0].pos), toScreenSpace(vbo.verts[1].pos)};
-    auto bresLine = genBresenhamLine(pos);
-    int signDeltaY=glm::sign(pos.second.y-pos.first.y);
-    int y=pos.first.y;
-    int i=0;
-    for(int i=0;i<bresLine.line.size();++i)
+    const auto drawLine = [&pixs, this](VertexBrut vertsb[2]){
+        if (vertsb[0].pos.x>vertsb[1].pos.x)
+            std::swap(vertsb[0], vertsb[1]);
+        std::pair<glm::ivec2, glm::ivec2> pos={vertsb[0].pos, vertsb[1].pos};
+        auto bresLine = genBresenhamLine(pos);
+        int signDeltaY=glm::sign(pos.second.y-pos.first.y);
+        int y=pos.first.y;
+        int i=0;
+        const colorraw_t c1=vertsb[0].color, c2=vertsb[1].color;
+        colorraw_t prevCol(c1);
+        size_t iPoints=0;
+        for(int i=0;i<bresLine.line.size();++i)
+        {
+            if (y<0)
+            {
+                if (signDeltaY<0)
+                    break;
+                else
+                {
+                    int ecart = -y-1;
+                    y=0;
+                    i+=ecart;
+                    continue;
+                }
+            }
+            else if (y>=m_size.y)
+            {
+                if (signDeltaY>0)
+                    break;
+                else
+                {
+                    int ecart = y-static_cast<int>(m_size.y-1)-1;
+                    y=m_size.y-1;
+                    i+=ecart;
+                    continue;
+                }
+            }
+            glm::ivec3 
+                    lColor(prevCol),
+                    rColor(interp<glm::ivec3, int>(c1, c2, iPoints+bresLine.line[i].second-bresLine.line[i].first, bresLine.npoints));
+            draw_horizontal(pixs, y, bresLine.line[i], {lColor, rColor});
+            y+=signDeltaY;
+            iPoints+=bresLine.line[i].second-bresLine.line[i].first+1;
+            prevCol=rColor;
+        }
+    };
+    const VertexBuffer& vbo = cmd.vbo;
+    size_t incr=0, start=0, end=0;
+    switch (cmd.vbo.type)
     {
-        if (y<0)
-        {
-            if (signDeltaY<0)
-                break;
-            else
-            {
-                int ecart = -y;
-                y=0;
-                i+=ecart;
-                continue;
-            }
-        }
-        else if (y>=m_size.y)
-        {
-            if (signDeltaY>0)
-                break;
-            else
-            {
-                int ecart = glm::abs(y-m_size.y-1);
-                y=m_size.y-1;
-                i+=ecart;
-                continue;
-            }
-        }
-        draw_horizontal(pixs, y, bresLine.line[i], {colorraw_t(vbo.verts[0].color*255.f), colorraw_t(vbo.verts[1].color*255.f)});
-        y+=signDeltaY;
+    case VertexBuffer::Type::Lines :
+        start=0;
+        end=vbo.verts.size()-1;
+        incr=2;
+        break;
+    case VertexBuffer::Type::LineFan :
+        start=1;
+        end=vbo.verts.size();
+        incr=1;
+        break;
+    case VertexBuffer::Type::LineStrip :
+        start=0;
+        end=vbo.verts.size()-1;
+        incr=1;
+        break;
     }
-
+    for (size_t iLine=start;iLine<end;iLine+=incr)
+    {
+        std::pair<Vertex, Vertex> trans_vpos;
+        switch (cmd.vbo.type)
+        {
+        case VertexBuffer::Type::Lines :
+        case VertexBuffer::Type::LineStrip :
+            trans_vpos = {
+                cmd.vertShader->get(vbo.verts[iLine+0]), 
+                cmd.vertShader->get(vbo.verts[iLine+1])
+            };
+            break;
+        case VertexBuffer::Type::LineFan :
+            trans_vpos = {
+                cmd.vertShader->get(vbo.verts[0]), 
+                cmd.vertShader->get(vbo.verts[iLine])
+            };
+            break;
+        }
+        
+        VertexBrut vertsb[2]={
+            {toScreenSpace(trans_vpos.first.pos), trans_vpos.first.color*255.f}, 
+            {toScreenSpace(trans_vpos.second.pos), trans_vpos.second.color*255.f}
+        };
+        drawLine(vertsb);
+    }
 }
 void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
 {

@@ -15,5 +15,5 @@ private:
     GLFWwindow* m_window;
     std::unique_ptr<CustomFrame> m_cframe;
     CommandBuffer m_cmdBuffer;
-    DrawCommand::observer cmdTest;
+    DrawCommand::observer cmdTri, cmdLines;
 };

@@ -44,7 +44,8 @@ struct VertexBuffer
         TriangleStrip,
         TriangleFan,
         Lines,
-        LineFan
+        LineFan,
+        LineStrip
     };
     Type type;
     std::vector<Vertex> verts;
@@ -101,7 +102,7 @@ public:
     void apply();
 private:
     void clear_image(glm::tvec3<uint8_t>* pixs, const glm::vec3& cmd);
-    void draw_line(glm::tvec3<uint8_t>* pixs, const VertexBuffer& cmd);
+    void draw_line(glm::tvec3<uint8_t>* pixs, const DrawCommand& cmd);
     void draw_triangle(glm::tvec3<uint8_t>* pixs, const DrawCommand& cmd);
 
     void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, std::pair<colorraw_t, colorraw_t> color);
