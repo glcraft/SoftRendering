@@ -48,18 +48,18 @@ void MainGame::init()
 
     VertexBuffer vbolines;
     vbolines.type=VertexBuffer::Type::LineStrip;
-    vbolines.verts.resize(9);
+    vbolines.verts.resize(4);
     
-    for (size_t i1=0;i1<=8;i1++)
+    for (size_t i1=0;i1<=3;i1++)
     {
-        const float sizeLine=size-0.1f;
-        float angle = static_cast<float>(i1)/8.f*2*glm::pi<float>() + 1.f;
+        const float sizeLine=size*2+0.2f;
+        float angle = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
         glm::vec2 pos(glm::cos(angle)*sizeLine, glm::sin(angle)*sizeLine);
         vbolines.verts[i1].pos=glm::vec4(pos, 0.f, 1.f);
     }
     vbolines.verts[0].color=glm::vec3(1,0,0);
-    vbolines.verts[1].color=glm::vec3(0,1,0);
-    vbolines.verts[2].color=glm::vec3(0,0,1);
+    vbolines.verts[1].color=glm::vec3(0,0,1);
+    vbolines.verts[2].color=glm::vec3(0,1,0);
     vbolines.verts[3].color=glm::vec3(1,0,0);
     cmdLines = m_cmdBuffer.draw_buffer(vbolines);
     cmdLines->vertShader->m_viewmat = viewmat;

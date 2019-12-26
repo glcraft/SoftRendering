@@ -56,8 +56,10 @@ BresenhamLine genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
     return result;
 }
 template <typename VecT, typename T>
-VecT interp(VecT first, VecT second, T current, T total)
+inline VecT interp(VecT first, VecT second, T current, T total)
 {
+    if (total==0)
+        return first;
     return first*(total-current)/total+second*(current)/total;
 }
 void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> xs, std::pair<colorraw_t, colorraw_t> colors)
@@ -120,7 +122,7 @@ void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
             }
             glm::ivec3 
                     lColor(prevCol),
-                    rColor(interp<glm::ivec3, int>(c1, c2, iPoints+bresLine.line[i].second-bresLine.line[i].first, bresLine.npoints));
+                    rColor(interp<glm::ivec3, int>(c1, c2, iPoints+bresLine.line[i].second-bresLine.line[i].first, bresLine.npoints-1));
             draw_horizontal(pixs, y, bresLine.line[i], {lColor, rColor});
             y+=signDeltaY;
             iPoints+=bresLine.line[i].second-bresLine.line[i].first+1;
