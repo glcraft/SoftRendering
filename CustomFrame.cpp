@@ -2,6 +2,9 @@
 #include "constants.h"
 #include <iostream>
 
+std::unique_ptr<VertexShader> DefaultVertexShader=std::make_unique<VertexShader>();
+std::unique_ptr<FragmentShader> DefaultFragmentShader=std::make_unique<FragmentShader>();;
+
 CustomFrame::CustomFrame(glm::uvec2 size)
 {
     glGenBuffers(1, &PBO);
@@ -64,7 +67,7 @@ void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
             case Command::Type::DrawBuffer:
             {
                 auto drawcmd = reinterpret_cast<DrawCommand*>(cmd.get());
-                if (drawcmd->vbo.type>=VertexBuffer::Type::Lines)
+                if (drawcmd->vbo->type>=VertexBuffer::Type::Lines)
                     draw_line(pixs, *drawcmd);
                 else
                     draw_triangle(pixs, *drawcmd);
@@ -92,11 +95,14 @@ _std::observer_ptr<ClearCommand> CommandBuffer::clear_image(glm::vec3 color)
 }
 _std::observer_ptr<DrawCommand>  CommandBuffer::draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color)
 {
-    std::unique_ptr<DrawCommand> cmd(new DrawCommand);
-    cmd->vbo.verts.resize(2);
-    cmd->vbo.verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
-    cmd->vbo.verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
-    cmd->vertShader = std::unique_ptr<VertexShader>(new VertexShader);
+    std::unique_ptr<DrawInternalBufferCommand> cmd(new DrawInternalBufferCommand);
+    cmd->m_internatBuffer=std::unique_ptr<VertexBuffer>(new VertexBuffer);
+    cmd->m_internatBuffer->verts.resize(2);
+    cmd->m_internatBuffer->verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
+    cmd->m_internatBuffer->verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
+    cmd->vbo = util::makeObserver(cmd->m_internatBuffer.get());
+    cmd->vertShader.reset(DefaultVertexShader.get());
+    cmd->fragShader.reset(DefaultFragmentShader.get());
     m_cmdBuffer.push_back(std::move(cmd));
     _std::observer_ptr<DrawCommand> res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
@@ -104,22 +110,26 @@ _std::observer_ptr<DrawCommand>  CommandBuffer::draw_line(glm::vec2 pos1, glm::v
 }
 DrawCommand::observer CommandBuffer::draw_triangle(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec3 color)
 {
-    std::unique_ptr<DrawCommand> cmd(new DrawCommand);
-    cmd->vbo.verts.resize(3);
-    cmd->vbo.verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
-    cmd->vbo.verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
-    cmd->vbo.verts[2]=Vertex{glm::vec4(pos3,0.f,1.f), color};
-    cmd->vertShader = std::unique_ptr<VertexShader>(new VertexShader);
+    std::unique_ptr<DrawInternalBufferCommand> cmd(new DrawInternalBufferCommand);
+    cmd->m_internatBuffer=std::unique_ptr<VertexBuffer>(new VertexBuffer);
+    cmd->m_internatBuffer->verts.resize(3);
+    cmd->m_internatBuffer->verts[0]=Vertex{glm::vec4(pos1,0.f,1.f), color};
+    cmd->m_internatBuffer->verts[1]=Vertex{glm::vec4(pos2,0.f,1.f), color};
+    cmd->m_internatBuffer->verts[2]=Vertex{glm::vec4(pos3,0.f,1.f), color};
+    cmd->vbo = util::makeObserver(cmd->m_internatBuffer.get());
+    cmd->vertShader.reset(DefaultVertexShader.get());
+    cmd->fragShader.reset(DefaultFragmentShader.get());
     DrawCommand::observer res(cmd.get());
     m_cmdBuffer.push_back(std::move(cmd));
     return res;
 }
-DrawCommand::observer CommandBuffer::draw_buffer(VertexBuffer vbo)
+DrawCommand::observer CommandBuffer::draw_buffer(_std::observer_ptr<VertexBuffer> vbo)
 {
     std::unique_ptr<DrawCommand> cmd(new DrawCommand);
     std::swap(vbo, cmd->vbo);
     DrawCommand::observer res(cmd.get());
-    cmd->vertShader = std::unique_ptr<VertexShader>(new VertexShader);
+    cmd->vertShader.reset(DefaultVertexShader.get());
+    cmd->fragShader.reset(DefaultFragmentShader.get());
     m_cmdBuffer.push_back(std::move(cmd));
     return res;
 }

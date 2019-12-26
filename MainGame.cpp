@@ -22,10 +22,12 @@ void MainGame::init()
 
     glm::mat4 viewmat = glm::ortho(-16.f/9.f, 16.f/9.f, -1.f, 1.f);
     const float size=0.5f;
+    m_vShader=std::make_unique<VertexShader>();
+    m_vShader->m_viewmat = viewmat;
     
-    VertexBuffer vbo;
-    vbo.type=VertexBuffer::Type::Triangles;
-    vbo.verts.resize(9);
+    m_vboTri.reset(new VertexBuffer);
+    m_vboTri->type=VertexBuffer::Type::Triangles;
+    m_vboTri->verts.resize(9);
     
     for (size_t i1=0;i1<3;i1++)
     {
@@ -37,34 +39,35 @@ void MainGame::init()
         {
             float angle = static_cast<float>(i2-i1+3)/3.f*2*glm::pi<float>() + 1.f;
             glm::vec2 pos(glm::cos(angle)*size, glm::sin(angle)*size);
-            vbo.verts[reali1+i2].pos=glm::vec4(pos1+pos, 0.f, 1.f);
+            m_vboTri->verts[reali1+i2].pos=glm::vec4(pos1+pos, 0.f, 1.f);
         }
-        vbo.verts[reali1+0].color=glm::vec3(1,0,0);
-        vbo.verts[reali1+1].color=glm::vec3(0,1,0);
-        vbo.verts[reali1+2].color=glm::vec3(0,0,1);
+        m_vboTri->verts[reali1+0].color=glm::vec3(1,0,0);
+        m_vboTri->verts[reali1+1].color=glm::vec3(0,1,0);
+        m_vboTri->verts[reali1+2].color=glm::vec3(0,0,1);
     }
-    cmdTri = m_cmdBuffer.draw_buffer(vbo);
-    cmdTri->vertShader->m_viewmat = viewmat;
-
-    VertexBuffer vbolines;
-    vbolines.type=VertexBuffer::Type::LineStrip;
-    vbolines.verts.resize(4);
+    {
+        auto cmd = m_cmdBuffer.draw_buffer(util::makeObserver(m_vboTri.get()));
+        cmd->vertShader=util::makeObserver(m_vShader);
+    }
+    m_vboLines.reset(new VertexBuffer);
+    m_vboLines->type=VertexBuffer::Type::LineStrip;
+    m_vboLines->verts.resize(4);
     
     for (size_t i1=0;i1<=3;i1++)
     {
         const float sizeLine=size*2+0.2f;
         float angle = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
         glm::vec2 pos(glm::cos(angle)*sizeLine, glm::sin(angle)*sizeLine);
-        vbolines.verts[i1].pos=glm::vec4(pos, 0.f, 1.f);
+        m_vboLines->verts[i1].pos=glm::vec4(pos, 0.f, 1.f);
     }
-    vbolines.verts[0].color=glm::vec3(1,0,0);
-    vbolines.verts[1].color=glm::vec3(0,0,1);
-    vbolines.verts[2].color=glm::vec3(0,1,0);
-    vbolines.verts[3].color=glm::vec3(1,0,0);
-    cmdLines = m_cmdBuffer.draw_buffer(vbolines);
-    cmdLines->vertShader->m_viewmat = viewmat;
-
-    
+    m_vboLines->verts[0].color=glm::vec3(1,0,0);
+    m_vboLines->verts[1].color=glm::vec3(0,0,1);
+    m_vboLines->verts[2].color=glm::vec3(0,1,0);
+    m_vboLines->verts[3].color=glm::vec3(1,0,0);
+    {
+        auto cmd = m_cmdBuffer.draw_buffer(util::makeObserver(m_vboLines.get()));
+        cmd->vertShader=util::makeObserver(m_vShader);
+    }
 }
 void MainGame::display()
 {
@@ -86,10 +89,10 @@ void MainGame::render()
 {
     {
         float angle = static_cast<float>(glfwGetTime())*1.f;
-        cmdTri->vertShader->m_modelmat=glm::mat4(1.f);
+        m_vShader->m_modelmat=glm::mat4(1.f);
         // cmdTri->vertShader->m_modelmat = glm::rotate(cmdTri->vertShader->m_modelmat, angle*0.2f, {0,1,0});
-        cmdTri->vertShader->m_modelmat = glm::rotate(cmdTri->vertShader->m_modelmat, angle, {0,0,1});
-        cmdLines->vertShader->m_modelmat=cmdTri->vertShader->m_modelmat;
+        m_vShader->m_modelmat = glm::rotate(m_vShader->m_modelmat, angle*0.4f, {0,1,0});
+        m_vShader->m_modelmat = glm::rotate(m_vShader->m_modelmat, angle, {0,0,1});
     }
     glClearColor(1,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);

@@ -32,10 +32,10 @@ public:
     glm::mat4 m_viewmat=glm::mat4(1.f);
     glm::mat4 m_projmat=glm::mat4(1.f);
 };
-class FragmentShader : public Shader<Vertex, glm::ivec3>
+class FragmentShader : public Shader<Vertex, glm::vec3>
 {
 public:
-    virtual glm::ivec3 get(Vertex) override;
+    virtual glm::vec3 get(Vertex) override;
 };
 struct VertexBuffer
 {
@@ -69,9 +69,15 @@ struct DrawCommand : public Command
 {
     using observer=_std::observer_ptr<DrawCommand>;
     DrawCommand() : Command(Command::Type::DrawBuffer){}
-    VertexBuffer vbo;
-    std::unique_ptr<VertexShader> vertShader;
-    std::unique_ptr<FragmentShader> fragShader;
+    _std::observer_ptr<VertexBuffer> vbo;
+    _std::observer_ptr<VertexShader> vertShader;
+    _std::observer_ptr<FragmentShader> fragShader;
+};
+struct DrawInternalBufferCommand : public DrawCommand
+{
+    using observer=_std::observer_ptr<DrawCommand>;
+    DrawInternalBufferCommand() : DrawCommand(){}
+    std::unique_ptr<VertexBuffer> m_internatBuffer;
 };
 class CommandBuffer
 {
@@ -80,7 +86,7 @@ public:
     ClearCommand::observer clear_image(glm::vec3 color);
     DrawCommand::observer draw_line(glm::vec2 pos1, glm::vec2 pos2, glm::vec3 color);
     DrawCommand::observer draw_triangle(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec3 color);
-    DrawCommand::observer draw_buffer(VertexBuffer);
+    DrawCommand::observer draw_buffer(_std::observer_ptr<VertexBuffer>);
     
     void clear_buffer();
     const std::vector<std::unique_ptr<Command>>& get_buffer() const

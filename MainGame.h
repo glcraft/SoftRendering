@@ -15,5 +15,6 @@ private:
     GLFWwindow* m_window;
     std::unique_ptr<CustomFrame> m_cframe;
     CommandBuffer m_cmdBuffer;
-    DrawCommand::observer cmdTri, cmdLines;
+    std::unique_ptr<VertexBuffer> m_vboTri, m_vboLines;
+    std::unique_ptr<VertexShader> m_vShader;
 };

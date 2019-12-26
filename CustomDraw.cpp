@@ -129,9 +129,9 @@ void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
             prevCol=rColor;
         }
     };
-    const VertexBuffer& vbo = cmd.vbo;
+    const VertexBuffer& vbo = *cmd.vbo;
     size_t incr=0, start=0, end=0;
-    switch (cmd.vbo.type)
+    switch (cmd.vbo->type)
     {
     case VertexBuffer::Type::Lines :
         start=0;
@@ -152,7 +152,7 @@ void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
     for (size_t iLine=start;iLine<end;iLine+=incr)
     {
         std::pair<Vertex, Vertex> trans_vpos;
-        switch (cmd.vbo.type)
+        switch (cmd.vbo->type)
         {
         case VertexBuffer::Type::Lines :
         case VertexBuffer::Type::LineStrip :
@@ -242,7 +242,7 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
         }
         return i;
     };
-    const VertexBuffer& vbo = cmd.vbo;
+    const VertexBuffer& vbo = *cmd.vbo;
     size_t nbVertsMax=vbo.verts.size()-2;
     for (size_t iTri=0;iTri<nbVertsMax;iTri+=3)
     {
@@ -282,4 +282,8 @@ Vertex VertexShader::get(Vertex vert)
 {
     vert.pos=m_projmat*m_viewmat*m_modelmat*vert.pos;
     return vert;
+}
+glm::vec3 FragmentShader::get(Vertex)
+{
+    return {1.f, 1.f, 1.f};
 }
