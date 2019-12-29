@@ -55,7 +55,9 @@ void CustomFrame::apply()
 void CustomFrame::draw_command_buffer(const CommandBuffer& cmdBuffer)
 {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, PBO);
-    glm::tvec3<uint8_t>* pixs = static_cast<glm::tvec3<uint8_t>*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
+    Pixels pixs;
+    pixs.colors = static_cast<colorraw_t*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
+    pixs.zbuffer = m_zbuffer.data();
     const auto& cmdData = cmdBuffer.get_buffer();
     for (auto& cmd : cmdData)
     {
@@ -152,4 +154,6 @@ void CustomFrame::setImageSize(glm::uvec2 size)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    m_zbuffer.resize(size.x*size.y);
 }

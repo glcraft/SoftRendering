@@ -56,7 +56,7 @@ BresenhamLine genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
     return result;
 }
 
-void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> xs, std::pair<Vertex, Vertex> verts, const FragmentShader& fshad)
+void CustomFrame::draw_horizontal(Pixels pixs, int y, std::pair<int, int> xs, std::pair<Vertex, Vertex> verts, const FragmentShader& fshad)
 {
     int yW=y*m_size.x;
     if (xs.second<0)
@@ -65,17 +65,24 @@ void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> x
     {
         if (xs.first>=m_size.x)
             return;
-        pixs[xs.first+yW]=fshad.get(verts.first)*255.f;
+        if (verts.first.pos.z>pixs.zbuffer[xs.first+yW])
+            return;
+        pixs.zbuffer[xs.first+yW] = verts.first.pos.z;
+        pixs.colors[xs.first+yW]=fshad.get(verts.first)*255.f;
         return;
     }
     int total=xs.second-xs.first;
     for (int x=glm::max(xs.first, 0), cx=x-xs.first; x<=xs.second && x<m_size.x;++x, ++cx)
     {
-        glm::ivec3 newcolor = fshad.get(interp(verts.first, verts.second, cx, total))*255.f;
-        pixs[x+yW]=newcolor;
+        Vertex currentVert = interp(verts.first, verts.second, cx, total);
+        if (currentVert.pos.z>pixs.zbuffer[x+yW])
+            continue;
+        pixs.zbuffer[x+yW] = currentVert.pos.z;
+        glm::ivec3 newcolor = fshad.get(currentVert)*255.f;
+        pixs.colors[x+yW]=newcolor;
     }
 }
-void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
+void CustomFrame::draw_line(Pixels pixs, const DrawCommand& cmd)
 {
     const auto drawLine = [&pixs, &cmd, this](std::pair<Vertex, Vertex> trans_vpos){
         
@@ -164,6 +171,8 @@ void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
             };
             break;
         }
+        trans_vpos.first.pos/=trans_vpos.first.pos.w;
+        trans_vpos.second.pos/=trans_vpos.second.pos.w;
         
         VertexBrut vertsb[2]={
             {toScreenSpace(trans_vpos.first.pos), trans_vpos.first.color*255.f}, 
@@ -172,7 +181,7 @@ void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
         drawLine(trans_vpos);
     }
 }
-void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
+void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
     const auto flatTop = [&pixs, &cmd, this](Vertex trans_vpos[3], VertexBrut vertsb[3], size_t offset=0){
@@ -249,6 +258,8 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
             cmd.vertShader->get(vbo.verts[iTri+1]), 
             cmd.vertShader->get(vbo.verts[iTri+2])
         };
+        for (auto& v: trans_vpos)
+            v.pos/=v.pos.w;
         std::sort(std::begin(trans_vpos), std::end(trans_vpos), [](const Vertex& p1, const Vertex& p2) { return p1.pos.y<p2.pos.y; });
         VertexBrut vertsb[3]={
             {toScreenSpace(trans_vpos[0].pos), colorraw_t(0)}, 
@@ -272,11 +283,14 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
         }
     }
 }
-void CustomFrame::clear_image(colorraw_t* pixs, const glm::vec3& color)
+void CustomFrame::clear_image(Pixels pixs, const glm::vec3& color)
 {
     size_t s=m_size.x*m_size.y;
     for(int ix=0;ix<s;++ix)
-        pixs[ix]=color;
+    {
+        pixs.colors[ix]=color;
+        pixs.zbuffer[ix]=1.f;
+    }
 }
 Vertex VertexShader::get(Vertex vert) const
 {

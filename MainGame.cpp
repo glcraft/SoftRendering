@@ -20,7 +20,7 @@ void MainGame::init()
     m_cmdBuffer.draw_triangle({1,-1}, {0, 0.8f}, {-1,1}, {0,0.5f,0});
     m_cmdBuffer.draw_triangle({-1,-1}, {0, -0.8f}, {1,1}, {0.5f,0,0});
 
-    glm::mat4 viewmat = glm::ortho(-16.f/9.f, 16.f/9.f, -1.f, 1.f);
+    glm::mat4 viewmat = glm::ortho(-16.f/9.f, 16.f/9.f, -1.f, 1.f, -10.f, 10.f);
     const float size=0.5f;
     m_vShader=std::make_unique<VertexShader>();
     m_vShader->m_viewmat = viewmat;

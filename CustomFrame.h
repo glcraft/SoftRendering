@@ -112,6 +112,11 @@ public:
 private:
     std::vector<std::unique_ptr<Command>> m_cmdBuffer;
 };
+struct Pixels
+{
+    colorraw_t* colors=nullptr;
+    float* zbuffer=nullptr;
+};
 
 class CustomFrame
 {
@@ -125,17 +130,18 @@ public:
     void draw_command_buffer(const CommandBuffer& cmdBuffer);
     void apply();
 private:
-    void clear_image(glm::tvec3<uint8_t>* pixs, const glm::vec3& cmd);
-    void draw_line(glm::tvec3<uint8_t>* pixs, const DrawCommand& cmd);
-    void draw_triangle(glm::tvec3<uint8_t>* pixs, const DrawCommand& cmd);
+    void clear_image(Pixels pixs, const glm::vec3& cmd);
+    void draw_line(Pixels pixs, const DrawCommand& cmd);
+    void draw_triangle(Pixels pixs, const DrawCommand& cmd);
 
-    void draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> xs, std::pair<Vertex, Vertex> verts, const FragmentShader& fshad);
+    void draw_horizontal(Pixels pixs, int y, std::pair<int, int> xs, std::pair<Vertex, Vertex> verts, const FragmentShader& fshad);
     glm::ivec2 toScreenSpace(glm::vec2 p) 
     {
         return (p+1.f)*0.5f*glm::vec2(m_size);
     }
 
     glm::uvec2 m_size;
+    std::vector<float> m_zbuffer;
     GLuint PBO;
     GLuint FBO;
     GLuint texture;
