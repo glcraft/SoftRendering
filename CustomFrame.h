@@ -18,16 +18,34 @@ struct Vertex
     glm::vec4 pos;
     glm::vec3 color;
 };
+
+template <typename VecT, typename T>
+inline VecT interp(VecT first, VecT second, T current, T total)
+{
+    if (total==0)
+        return first;
+    return first*(total-current)/total+second*(current)/total;
+}
+template <typename T>
+inline Vertex interp(Vertex first, Vertex second, T current, T total)
+{
+    if (total==0)
+        return first;
+    Vertex vres;
+    vres.pos = interp(first.pos, second.pos, static_cast<float>(current), static_cast<float>(total));
+    vres.color = interp(first.color, second.color, static_cast<float>(current), static_cast<float>(total));
+    return vres;
+}
 template <typename InputType, typename OutputType>
 class Shader
 {
 public:
-    virtual OutputType get(InputType){return OutputType();};
+    virtual OutputType get(InputType) const {return OutputType();};
 };
 class VertexShader : public Shader<Vertex, Vertex>
 {
 public:
-    virtual Vertex get(Vertex) override;
+    virtual Vertex get(Vertex) const override;
     glm::mat4 m_modelmat=glm::mat4(1.f);
     glm::mat4 m_viewmat=glm::mat4(1.f);
     glm::mat4 m_projmat=glm::mat4(1.f);
@@ -35,7 +53,7 @@ public:
 class FragmentShader : public Shader<Vertex, glm::vec3>
 {
 public:
-    virtual glm::vec3 get(Vertex) override;
+    virtual glm::vec3 get(Vertex) const override ;
 };
 struct VertexBuffer
 {
@@ -111,7 +129,7 @@ private:
     void draw_line(glm::tvec3<uint8_t>* pixs, const DrawCommand& cmd);
     void draw_triangle(glm::tvec3<uint8_t>* pixs, const DrawCommand& cmd);
 
-    void draw_horizontal(glm::tvec3<uint8_t>* pixs, int y, std::pair<int, int> xs, std::pair<colorraw_t, colorraw_t> color);
+    void draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> xs, std::pair<Vertex, Vertex> verts, const FragmentShader& fshad);
     glm::ivec2 toScreenSpace(glm::vec2 p) 
     {
         return (p+1.f)*0.5f*glm::vec2(m_size);

@@ -55,14 +55,8 @@ BresenhamLine genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
         std::reverse(result.line.begin(), result.line.end());
     return result;
 }
-template <typename VecT, typename T>
-inline VecT interp(VecT first, VecT second, T current, T total)
-{
-    if (total==0)
-        return first;
-    return first*(total-current)/total+second*(current)/total;
-}
-void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> xs, std::pair<colorraw_t, colorraw_t> colors)
+
+void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> xs, std::pair<Vertex, Vertex> verts, const FragmentShader& fshad)
 {
     int yW=y*m_size.x;
     if (xs.second<0)
@@ -71,28 +65,31 @@ void CustomFrame::draw_horizontal(colorraw_t* pixs, int y, std::pair<int, int> x
     {
         if (xs.first>=m_size.x)
             return;
-        pixs[xs.first+yW]=colors.first;
+        pixs[xs.first+yW]=fshad.get(verts.first)*255.f;
         return;
     }
     int total=xs.second-xs.first;
     for (int x=glm::max(xs.first, 0), cx=x-xs.first; x<=xs.second && x<m_size.x;++x, ++cx)
     {
-        glm::ivec3 newcolor = interp(glm::ivec3(colors.first), glm::ivec3(colors.second), cx, total);
+        glm::ivec3 newcolor = fshad.get(interp(verts.first, verts.second, cx, total))*255.f;
         pixs[x+yW]=newcolor;
     }
 }
 void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
 {
-    const auto drawLine = [&pixs, this](VertexBrut vertsb[2]){
-        if (vertsb[0].pos.x>vertsb[1].pos.x)
-            std::swap(vertsb[0], vertsb[1]);
+    const auto drawLine = [&pixs, &cmd, this](std::pair<Vertex, Vertex> trans_vpos){
+        
+        if (trans_vpos.first.pos.x>trans_vpos.second.pos.x)
+            std::swap(trans_vpos.first, trans_vpos.second);
+        VertexBrut vertsb[2]={
+            {toScreenSpace(trans_vpos.first.pos), trans_vpos.first.color*255.f}, 
+            {toScreenSpace(trans_vpos.second.pos), trans_vpos.second.color*255.f}
+        };
         std::pair<glm::ivec2, glm::ivec2> pos={vertsb[0].pos, vertsb[1].pos};
         auto bresLine = genBresenhamLine(pos);
         int signDeltaY=glm::sign(pos.second.y-pos.first.y);
         int y=pos.first.y;
         int i=0;
-        const colorraw_t c1=vertsb[0].color, c2=vertsb[1].color;
-        colorraw_t prevCol(c1);
         size_t iPoints=0;
         for(int i=0;i<bresLine.line.size();++i)
         {
@@ -120,13 +117,12 @@ void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
                     continue;
                 }
             }
-            glm::ivec3 
-                    lColor(prevCol),
-                    rColor(interp<glm::ivec3, int>(c1, c2, iPoints+bresLine.line[i].second-bresLine.line[i].first, bresLine.npoints-1));
-            draw_horizontal(pixs, y, bresLine.line[i], {lColor, rColor});
+            Vertex 
+                lVert=interp(trans_vpos.first, trans_vpos.second, iPoints, bresLine.npoints-1),
+                rVert=interp(trans_vpos.first, trans_vpos.second, iPoints+bresLine.line[i].second-bresLine.line[i].first, bresLine.npoints-1);
+            draw_horizontal(pixs, y, bresLine.line[i], {lVert, rVert}, *cmd.fragShader);
             y+=signDeltaY;
             iPoints+=bresLine.line[i].second-bresLine.line[i].first+1;
-            prevCol=rColor;
         }
     };
     const VertexBuffer& vbo = *cmd.vbo;
@@ -173,15 +169,14 @@ void CustomFrame::draw_line(colorraw_t* pixs, const DrawCommand& cmd)
             {toScreenSpace(trans_vpos.first.pos), trans_vpos.first.color*255.f}, 
             {toScreenSpace(trans_vpos.second.pos), trans_vpos.second.color*255.f}
         };
-        drawLine(vertsb);
+        drawLine(trans_vpos);
     }
 }
 void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
 {
     // http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-    const auto flatTop = [&pixs, this](VertexBrut vertsb[3], size_t offset=0){
+    const auto flatTop = [&pixs, &cmd, this](Vertex trans_vpos[3], VertexBrut vertsb[3], size_t offset=0){
         size_t indx[2]={1,2};
-        
         BresenhamLine ligne[2]={genBresenhamLine({vertsb[0].pos, vertsb[indx[0]].pos}), genBresenhamLine({vertsb[0].pos, vertsb[indx[1]].pos})};
         size_t maxy=glm::min(ligne[0].line.size(), ligne[1].line.size());
         if (ligne[0].line[maxy-1].first>ligne[1].line[maxy-1].first)
@@ -235,7 +230,10 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
             glm::ivec3 
                 lColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[0]].color, iPoints1+glm::max(0,(ligne[0].line[i].second-ligne[0].line[i].first)), ligne[0].npoints-1)), 
                 rColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[1]].color, iPoints2+glm::max(0,(ligne[1].line[i].second-ligne[1].line[i].first)), ligne[1].npoints-1));//
-            draw_horizontal(pixs, y, {left, right}, {lColor, rColor});
+            Vertex 
+                lVert=interp(trans_vpos[0], trans_vpos[indx[0]], iPoints1+glm::max(0,(ligne[0].line[i].second-ligne[0].line[i].first)), ligne[0].npoints-1),
+                rVert=interp(trans_vpos[0], trans_vpos[indx[1]], iPoints2+glm::max(0,(ligne[1].line[i].second-ligne[1].line[i].first)), ligne[1].npoints-1);
+            draw_horizontal(pixs, y, {left, right}, {lVert, rVert}, *cmd.fragShader);
             y+=signDeltaY;
             iPoints1+=ligne[0].line[i].second-ligne[0].line[i].first+1;
             iPoints2+=ligne[1].line[i].second-ligne[1].line[i].first+1;
@@ -251,24 +249,26 @@ void CustomFrame::draw_triangle(colorraw_t* pixs, const DrawCommand& cmd)
             cmd.vertShader->get(vbo.verts[iTri+1]), 
             cmd.vertShader->get(vbo.verts[iTri+2])
         };
+        std::sort(std::begin(trans_vpos), std::end(trans_vpos), [](const Vertex& p1, const Vertex& p2) { return p1.pos.y<p2.pos.y; });
         VertexBrut vertsb[3]={
-            {toScreenSpace(trans_vpos[0].pos), trans_vpos[0].color*255.f}, 
-            {toScreenSpace(trans_vpos[1].pos), trans_vpos[1].color*255.f}, 
-            {toScreenSpace(trans_vpos[2].pos), trans_vpos[2].color*255.f}
+            {toScreenSpace(trans_vpos[0].pos), colorraw_t(0)}, 
+            {toScreenSpace(trans_vpos[1].pos), colorraw_t(0)}, 
+            {toScreenSpace(trans_vpos[2].pos), colorraw_t(0)}
         };
-        std::sort(std::begin(vertsb), std::end(vertsb), [](const VertexBrut& p1, const VertexBrut& p2) { return p1.pos.y<p2.pos.y; });
-        if (vertsb[1].pos.y==vertsb[2].pos.y)
-            flatTop(vertsb);
-        else if (vertsb[1].pos.y==vertsb[0].pos.y)
+        if (trans_vpos[1].pos.y==trans_vpos[2].pos.y)
+            flatTop(trans_vpos, vertsb);
+        else if (trans_vpos[1].pos.y==trans_vpos[0].pos.y)
         {
+            std::swap(trans_vpos[0], trans_vpos[2]);
             std::swap(vertsb[0], vertsb[2]);
-            flatTop(vertsb);
+            flatTop(trans_vpos, vertsb);
         }
         else
         {
-            size_t offset = flatTop(vertsb);
+            size_t offset = flatTop(trans_vpos, vertsb);
+            std::swap(trans_vpos[0], trans_vpos[2]);
             std::swap(vertsb[0], vertsb[2]);
-            flatTop(vertsb, 1);
+            flatTop(trans_vpos, vertsb, 1);
         }
     }
 }
@@ -278,12 +278,12 @@ void CustomFrame::clear_image(colorraw_t* pixs, const glm::vec3& color)
     for(int ix=0;ix<s;++ix)
         pixs[ix]=color;
 }
-Vertex VertexShader::get(Vertex vert)
+Vertex VertexShader::get(Vertex vert) const
 {
     vert.pos=m_projmat*m_viewmat*m_modelmat*vert.pos;
     return vert;
 }
-glm::vec3 FragmentShader::get(Vertex)
+glm::vec3 FragmentShader::get(Vertex v) const
 {
-    return {1.f, 1.f, 1.f};
+    return v.color;
 }
