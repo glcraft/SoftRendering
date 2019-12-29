@@ -37,7 +37,7 @@ void MainGame::init()
     const float size=0.5f;
 
     m_texture = std::make_unique<CustomTexture>();
-    m_texture->load("img_test.png");
+    m_texture->load("untitled.png");
     m_vShader=std::make_unique<VertexShader>();
     m_vShader->m_viewmat = viewmat;
     auto fShader = std::make_unique<FragmentTextureShader>();
@@ -45,28 +45,30 @@ void MainGame::init()
     m_fShader = std::move(fShader);
     
     m_vboTri.reset(new VertexBuffer);
-    m_vboTri->type=VertexBuffer::Type::Triangles;
-    m_vboTri->verts.resize(9);
-    
-    for (size_t i1=0;i1<3;i1++)
-    {
-        size_t reali1=i1*3;
-        float angle1 = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
-        glm::vec2 pos1(glm::cos(angle1)*size, glm::sin(angle1)*size);
+    load_model_obj("untitled.obj",*m_vboTri);
 
-        for (size_t i2=0;i2<3;i2++)
-        {
-            float angle = static_cast<float>(i2-i1+3)/3.f*2*glm::pi<float>() + 1.f;
-            glm::vec2 pos(glm::cos(angle)*size, glm::sin(angle)*size);
-            m_vboTri->verts[reali1+i2].pos=glm::vec4(pos1+pos, 0.f, 1.f);
-        }
-        m_vboTri->verts[reali1+0].color=glm::vec3(1,0,0);
-        m_vboTri->verts[reali1+1].color=glm::vec3(0,1,0);
-        m_vboTri->verts[reali1+2].color=glm::vec3(0,0,1);
-        m_vboTri->verts[reali1+0].uv=glm::vec2(0,0);
-        m_vboTri->verts[reali1+1].uv=glm::vec2(1,0);
-        m_vboTri->verts[reali1+2].uv=glm::vec2(0,1);
-    }
+    // m_vboTri->verts.resize(9);
+    
+    // for (size_t i1=0;i1<3;i1++)
+    // {
+    //     size_t reali1=i1*3;
+    //     float angle1 = static_cast<float>(i1)/3.f*2*glm::pi<float>() + 1.f;
+    //     glm::vec2 pos1(glm::cos(angle1)*size, glm::sin(angle1)*size);
+
+    //     for (size_t i2=0;i2<3;i2++)
+    //     {
+    //         float angle = static_cast<float>(i2-i1+3)/3.f*2*glm::pi<float>() + 1.f;
+    //         glm::vec2 pos(glm::cos(angle)*size, glm::sin(angle)*size);
+    //         m_vboTri->verts[reali1+i2].pos=glm::vec4(pos1+pos, 0.f, 1.f);
+    //     }
+    //     m_vboTri->verts[reali1+0].color=glm::vec3(1,0,0);
+    //     m_vboTri->verts[reali1+1].color=glm::vec3(0,1,0);
+    //     m_vboTri->verts[reali1+2].color=glm::vec3(0,0,1);
+    //     m_vboTri->verts[reali1+0].uv=glm::vec2(0,0);
+    //     m_vboTri->verts[reali1+1].uv=glm::vec2(1,0);
+    //     m_vboTri->verts[reali1+2].uv=glm::vec2(0,1);
+    // }
+
     {
         auto cmd = m_cmdBuffer.draw_buffer(util::makeObserver(m_vboTri.get()));
         cmd->vertShader=util::makeObserver(m_vShader);

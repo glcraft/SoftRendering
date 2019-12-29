@@ -3,6 +3,7 @@
 #include <memory>
 #include "CustomFrame.h"
 #include "CustomTexture.h"
+#include "Modele3D.h"
 
 class MainGame
 {
