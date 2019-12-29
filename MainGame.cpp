@@ -6,6 +6,19 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+class FragmentTextureShader : public FragmentShader
+{
+public:
+    virtual glm::vec3 get(Vertex v) const override
+    {
+        if (!m_texture)
+            return glm::vec3(0.f);
+        return m_texture->get(v.uv) * v.color;
+    }
+    _std::observer_ptr<CustomTexture> m_texture;
+};
+
 void MainGame::init()
 {
     glfwInit();
@@ -22,8 +35,14 @@ void MainGame::init()
 
     glm::mat4 viewmat = glm::ortho(-16.f/9.f, 16.f/9.f, -1.f, 1.f, -10.f, 10.f);
     const float size=0.5f;
+
+    m_texture = std::make_unique<CustomTexture>();
+    m_texture->load("img_test.png");
     m_vShader=std::make_unique<VertexShader>();
     m_vShader->m_viewmat = viewmat;
+    auto fShader = std::make_unique<FragmentTextureShader>();
+    fShader->m_texture.reset(m_texture.get());
+    m_fShader = std::move(fShader);
     
     m_vboTri.reset(new VertexBuffer);
     m_vboTri->type=VertexBuffer::Type::Triangles;
@@ -44,10 +63,14 @@ void MainGame::init()
         m_vboTri->verts[reali1+0].color=glm::vec3(1,0,0);
         m_vboTri->verts[reali1+1].color=glm::vec3(0,1,0);
         m_vboTri->verts[reali1+2].color=glm::vec3(0,0,1);
+        m_vboTri->verts[reali1+0].uv=glm::vec2(0,0);
+        m_vboTri->verts[reali1+1].uv=glm::vec2(1,0);
+        m_vboTri->verts[reali1+2].uv=glm::vec2(0,1);
     }
     {
         auto cmd = m_cmdBuffer.draw_buffer(util::makeObserver(m_vboTri.get()));
         cmd->vertShader=util::makeObserver(m_vShader);
+        cmd->fragShader=util::makeObserver(m_fShader);
     }
     m_vboLines.reset(new VertexBuffer);
     m_vboLines->type=VertexBuffer::Type::LineStrip;
@@ -68,6 +91,7 @@ void MainGame::init()
         auto cmd = m_cmdBuffer.draw_buffer(util::makeObserver(m_vboLines.get()));
         cmd->vertShader=util::makeObserver(m_vShader);
     }
+    
 }
 void MainGame::display()
 {

@@ -17,6 +17,7 @@ struct Vertex
     virtual glm::vec4 getPosition() const {return pos;};
     glm::vec4 pos;
     glm::vec3 color;
+    glm::vec2 uv;
 };
 
 template <typename VecT, typename T>
@@ -34,6 +35,7 @@ inline Vertex interp(Vertex first, Vertex second, T current, T total)
     Vertex vres;
     vres.pos = interp(first.pos, second.pos, static_cast<float>(current), static_cast<float>(total));
     vres.color = interp(first.color, second.color, static_cast<float>(current), static_cast<float>(total));
+    vres.uv = interp(first.uv, second.uv, static_cast<float>(current), static_cast<float>(total));
     return vres;
 }
 template <typename InputType, typename OutputType>
