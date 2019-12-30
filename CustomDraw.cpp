@@ -77,6 +77,15 @@ void CustomFrame::draw_horizontal(Pixels pixs, int y, std::pair<int, int> xs, st
         Vertex currentVert = interp(verts.first, verts.second, cx, total);
         if (currentVert.pos.z>pixs.zbuffer[x+yW])
             continue;
+        constexpr float vNear=-1, vFar=1;
+        bool pass=false;
+        for (int iComp=0;iComp<3 && !pass;++iComp)
+        {
+            if (currentVert.pos[iComp] <= vNear || currentVert.pos[iComp] > vFar)
+                pass=true;
+        }
+        if (pass)
+            continue;
         pixs.zbuffer[x+yW] = currentVert.pos.z;
         glm::ivec3 newcolor = fshad.get(currentVert)*255.f;
         pixs.colors[x+yW]=newcolor;
@@ -263,14 +272,24 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
             cmd.vertShader->get(vbo.verts[iTri+2])
         };
         for (auto& v: trans_vpos)
-            v.pos/=v.pos.w;
+            v.pos/=std::abs(v.pos.w);
         {
             //BACKFACE CULLING
             glm::vec3 v0v1 = (trans_vpos[1].pos-trans_vpos[0].pos);
             glm::vec3 v0v2 = (trans_vpos[2].pos-trans_vpos[0].pos);
             if ((v0v1.x * v0v2.y - v0v2.x * v0v1.y)<0)
                 continue;
-
+            constexpr float vNear=-1, vFar=1;
+            bool pass=false;
+            for (int iComp=0;iComp<3 && !pass;++iComp)
+            {
+                if (trans_vpos[0].pos[iComp] <= vNear && trans_vpos[1].pos[iComp] <= vNear && trans_vpos[2].pos[iComp] <= vNear)
+                    pass=true;
+                if (trans_vpos[0].pos[iComp] > vFar && trans_vpos[1].pos[iComp] > vFar && trans_vpos[2].pos[iComp] > vFar)
+                    pass=true;
+            }
+            if (pass)
+                continue;
         }
         std::sort(std::begin(trans_vpos), std::end(trans_vpos), [](const Vertex& p1, const Vertex& p2) { return p1.pos.y<p2.pos.y; });
         VertexBrut vertsb[3]={
