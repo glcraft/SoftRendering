@@ -26,7 +26,7 @@ bool load_model_obj(std::string path, VertexBuffer& model)
             verts.emplace_back(std::stof(sm[1]), std::stof(sm[2]), std::stof(sm[3]));
         else if ("vt (-?[\\d.]+) (-?[\\d.]+)"_rg.search(line, sm))
             uvs.emplace_back(std::stof(sm[1]), 1.f-std::stof(sm[2]));
-        else if ("f (\\d+)/(\\d+)?/(\\d+) (\\d+)/(\\d+)?/(\\d+) (\\d+)/(\\d+)?/(\\d+)"_rg.search(line, sm))
+        else if ("f (\\d+)/(\\d+)(/\\d+)? (\\d+)/(\\d+)(/\\d+)? (\\d+)/(\\d+)(/\\d+)?"_rg.search(line, sm))
         {
             for (int i=0;i<9;i+=3)
             {
