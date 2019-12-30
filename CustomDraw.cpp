@@ -264,6 +264,14 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
         };
         for (auto& v: trans_vpos)
             v.pos/=v.pos.w;
+        {
+            //BACKFACE CULLING
+            glm::vec3 v0v1 = (trans_vpos[1].pos-trans_vpos[0].pos);
+            glm::vec3 v0v2 = (trans_vpos[2].pos-trans_vpos[0].pos);
+            if ((v0v1.x * v0v2.y - v0v2.x * v0v1.y)<0)
+                continue;
+
+        }
         std::sort(std::begin(trans_vpos), std::end(trans_vpos), [](const Vertex& p1, const Vertex& p2) { return p1.pos.y<p2.pos.y; });
         VertexBrut vertsb[3]={
             {toScreenSpace(trans_vpos[0].pos), colorraw_t(0)}, 
