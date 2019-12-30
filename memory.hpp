@@ -64,7 +64,7 @@ namespace _std {
 
 		[[nodiscard]] constexpr element_type *operator->() const noexcept { return get(); }
 
-		[[nodiscard]] constexpr explicit operator bool() const noexcept { return _data == nullptr; }
+		[[nodiscard]] constexpr explicit operator bool() const noexcept { return _data != nullptr; }
 
 		[[nodiscard]] constexpr explicit operator element_type *() const noexcept { return get(); }
 
