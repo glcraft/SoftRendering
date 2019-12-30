@@ -207,6 +207,8 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
                 else
                 {
                     int ecart = -y-1;
+                    if (ecart>=ligne[0].line.size()||ecart>=ligne[1].line.size())
+                        break;
                     for(int iLine=0;iLine<=ecart;iLine++)
                     {
                         iPoints1+=ligne[0].line[i+iLine].second-ligne[0].line[i+iLine].first+1;
@@ -224,6 +226,8 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
                 else
                 {
                     int ecart = y-static_cast<int>(m_size.y-1)-1;
+                    if (ecart>=ligne[0].line.size()||ecart>=ligne[1].line.size())
+                        break;
                     for(int iLine=0;iLine<=ecart;iLine++)
                     {
                         iPoints1+=ligne[0].line[i+iLine].second-ligne[0].line[i+iLine].first+1;
