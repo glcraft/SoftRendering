@@ -272,7 +272,10 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
             cmd.vertShader->get(vbo.verts[iTri+2])
         };
         for (auto& v: trans_vpos)
+        {
+            v.w=v.pos.w;
             v.pos/=std::abs(v.pos.w);
+        }
         {
             //BACKFACE CULLING
             glm::vec3 v0v1 = (trans_vpos[1].pos-trans_vpos[0].pos);

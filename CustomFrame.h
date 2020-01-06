@@ -19,8 +19,16 @@ struct Vertex
     glm::vec4 pos;
     glm::vec3 color;
     glm::vec2 uv;
+    float w=1.f;
 };
 
+template <typename VecT, typename T>
+inline VecT interp(VecT first, VecT second, T current, T total, float aW, float bW)
+{
+    if (total==0)
+        return first;
+    return ((first*(total-current)/total)/aW + (second*(current)/total)/bW)/(((total-current)/total)/aW+(current/total)/bW);
+}
 template <typename VecT, typename T>
 inline VecT interp(VecT first, VecT second, T current, T total)
 {
@@ -34,9 +42,19 @@ inline Vertex interp(Vertex first, Vertex second, T current, T total)
     if (total==0)
         return first;
     Vertex vres;
+    // interpolation par w deja fait
     vres.pos = interp(first.pos, second.pos, static_cast<float>(current), static_cast<float>(total));
+    if (first.w == 1.f && second.w == 1.f)
+    {
     vres.color = interp(first.color, second.color, static_cast<float>(current), static_cast<float>(total));
     vres.uv = interp(first.uv, second.uv, static_cast<float>(current), static_cast<float>(total));
+    }
+    else
+    {
+        vres.color = interp(first.color, second.color, static_cast<float>(current), static_cast<float>(total), first.w, second.w);
+        vres.uv = interp(first.uv, second.uv, static_cast<float>(current), static_cast<float>(total), first.w, second.w);
+        vres.w = 1.f;
+    }
     return vres;
 }
 template <typename InputType, typename OutputType>
