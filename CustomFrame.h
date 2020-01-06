@@ -1,11 +1,36 @@
 #pragma once
+#include <variant>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
 #include "memory.hpp"
 #include "constants.h"
+#include "memory.hpp"
 using colorraw_t = glm::tvec3<uint8_t>;
+template <typename T>
+using value_ref_t = std::variant<T, _std::observer_ptr<T>>;
+template <typename T>
+inline T& get_valueref(value_ref_t<T>& val)
+{
+    if (val.index()==0)
+        return std::get<T>(val);
+    else if (val.index()==1)
+        return *std::get<_std::observer_ptr<T>>(val);
+    else
+        throw std::runtime_error("value_ref_t not inited.");
+}
+template <typename T>
+inline const T& get_valueref(const value_ref_t<T>& val)
+{
+    if (val.index()==0)
+        return std::get<T>(val);
+    else if (val.index()==1)
+        return *std::get<_std::observer_ptr<T>>(val);
+    else
+        throw std::runtime_error("value_ref_t not inited.");
+}
+
 struct VertexBrut
 {
     glm::ivec2 pos;
@@ -46,8 +71,8 @@ inline Vertex interp(Vertex first, Vertex second, T current, T total)
     vres.pos = interp(first.pos, second.pos, static_cast<float>(current), static_cast<float>(total));
     if (first.w == 1.f && second.w == 1.f)
     {
-    vres.color = interp(first.color, second.color, static_cast<float>(current), static_cast<float>(total));
-    vres.uv = interp(first.uv, second.uv, static_cast<float>(current), static_cast<float>(total));
+        vres.color = interp(first.color, second.color, static_cast<float>(current), static_cast<float>(total));
+        vres.uv = interp(first.uv, second.uv, static_cast<float>(current), static_cast<float>(total));
     }
     else
     {
@@ -67,9 +92,9 @@ class VertexShader : public Shader<Vertex, Vertex>
 {
 public:
     virtual Vertex get(Vertex) const override;
-    glm::mat4 m_modelmat=glm::mat4(1.f);
-    glm::mat4 m_viewmat=glm::mat4(1.f);
-    glm::mat4 m_projmat=glm::mat4(1.f);
+    value_ref_t<glm::mat4> m_modelmat=glm::mat4(1.f);
+    value_ref_t<glm::mat4> m_viewmat=glm::mat4(1.f);
+    value_ref_t<glm::mat4> m_projmat=glm::mat4(1.f);
 };
 class FragmentShader : public Shader<Vertex, glm::vec3>
 {

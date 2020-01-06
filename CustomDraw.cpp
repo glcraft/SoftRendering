@@ -328,7 +328,10 @@ void CustomFrame::clear_image(Pixels pixs, const glm::vec3& color)
 }
 Vertex VertexShader::get(Vertex vert) const
 {
-    vert.pos=m_projmat*m_viewmat*m_modelmat*vert.pos;
+    const auto& projmat = get_valueref(m_projmat);
+    const auto& viewmat = get_valueref(m_viewmat);
+    const auto& modelmat = get_valueref(m_modelmat);
+    vert.pos=projmat*viewmat*modelmat*vert.pos;
     return vert;
 }
 glm::vec3 FragmentShader::get(Vertex v) const

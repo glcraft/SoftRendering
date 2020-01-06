@@ -17,6 +17,8 @@ find_package(GLEW REQUIRED)
 
 target_link_libraries(CompNoel PRIVATE glfw glm GLEW::GLEW)
 
+target_compile_definitions(CompNoel PUBLIC GLM_FORCE_SWIZZLE)
+
 set_target_properties(CompNoel PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED true
