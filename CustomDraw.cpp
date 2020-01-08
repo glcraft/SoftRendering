@@ -58,12 +58,13 @@ BresenhamLine genBresenhamLine(std::pair<glm::ivec2, glm::ivec2> pos)
 
 void CustomFrame::draw_horizontal(Pixels pixs, int y, std::pair<int, int> xs, std::pair<Vertex, Vertex> verts, const FragmentShader& fshad)
 {
-    int yW=y*m_size.x;
+    glm::ivec2 isize(m_size);
+    int yW=y*isize.x;
     if (xs.second<0)
         return;
     if (xs.second==xs.first)
     {
-        if (xs.first>=m_size.x)
+        if (xs.first>=static_cast<int>( isize.x))
             return;
         if (verts.first.pos.z>pixs.zbuffer[xs.first+yW])
             return;
@@ -72,7 +73,7 @@ void CustomFrame::draw_horizontal(Pixels pixs, int y, std::pair<int, int> xs, st
         return;
     }
     int total=xs.second-xs.first;
-    for (int x=glm::max(xs.first, 0), cx=x-xs.first; x<=xs.second && x<m_size.x;++x, ++cx)
+    for (int x=glm::max(xs.first, 0), cx=x-xs.first; x<=xs.second && x<isize.x;++x, ++cx)
     {
         Vertex currentVert = interp(verts.first, verts.second, cx, total);
         if (currentVert.pos.z>pixs.zbuffer[x+yW])
@@ -121,7 +122,7 @@ void CustomFrame::draw_line(Pixels pixs, const DrawCommand& cmd)
                     continue;
                 }
             }
-            else if (y>=m_size.y)
+            else if (y>=static_cast<int>(m_size.y))
             {
                 if (signDeltaY>0)
                     break;
@@ -228,7 +229,7 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
                     continue;
                 }
             }
-            else if (y>=m_size.y)
+            else if (y>=static_cast<int>(m_size.y))
             {
                 if (signDeltaY>0)
                     break;
@@ -249,9 +250,6 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
             }
             int left=glm::min(ligne[0].line[i].first, ligne[1].line[i].second);
             int right=glm::max(ligne[0].line[i].first, ligne[1].line[i].second);
-            glm::ivec3 
-                lColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[0]].color, iPoints1+glm::max(0,(ligne[0].line[i].second-ligne[0].line[i].first)), ligne[0].npoints-1)), 
-                rColor(interp<glm::ivec3, int>(vertsb[0].color, vertsb[indx[1]].color, iPoints2+glm::max(0,(ligne[1].line[i].second-ligne[1].line[i].first)), ligne[1].npoints-1));//
             Vertex 
                 lVert=interp(trans_vpos[0], trans_vpos[indx[0]], iPoints1+glm::max(0,(ligne[0].line[i].second-ligne[0].line[i].first)), ligne[0].npoints-1),
                 rVert=interp(trans_vpos[0], trans_vpos[indx[1]], iPoints2+glm::max(0,(ligne[1].line[i].second-ligne[1].line[i].first)), ligne[1].npoints-1);
@@ -273,8 +271,9 @@ void CustomFrame::draw_triangle(Pixels pixs, const DrawCommand& cmd)
         };
         for (auto& v: trans_vpos)
         {
-            v.w=v.pos.w;
-            v.pos/=std::abs(v.pos.w);
+            v.w=(v.pos.w);
+            float sign = glm::sign(v.pos.z);
+            v.pos/=v.w;
         }
         {
             //BACKFACE CULLING
